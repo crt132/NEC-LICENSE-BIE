@@ -1,0 +1,30 @@
+{
+  "checked": "2083 Ashwin 9",
+  "calendar_title": "Licensing exam calendar 2083/84",
+  "rounds": [
+    { "round": "1st", "apply_from": "2083-04-28", "apply_to": "2083-05-17", "double_fee_to": "2083-05-24", "exam": "2083-06-17" },
+    { "round": "2nd", "apply_from": "2083-08-01", "apply_to": "2083-08-21", "double_fee_to": "2083-08-28", "exam": "2083-09-20" },
+    { "round": "3rd", "apply_from": "2083-10-22", "apply_to": "2083-11-13", "double_fee_to": "2083-11-20", "exam": "2083-12-10" },
+    { "round": "4th", "apply_from": "2084-01-20", "apply_to": "2084-02-09", "double_fee_to": "2084-02-16", "exam": "2084-03-04" }
+  ],
+  "notices": [
+    {
+      "tag": "Result",
+      "title": "13th General Registered Engineer licensing exam results published.",
+      "text": "Exams were held on 2083 Asar 21 at ICTC, IOE Pulchowk (Kathmandu) and 2083 Asar 23 at IOE Paschimanchal Campus (Pokhara).",
+      "link": "https://nec.gov.np/result",
+      "link_text": "Check registration status",
+      "ticker": "13th licensing exam results published (held 2083 Asar 21 Kathmandu and 2083 Asar 23 Pokhara).",
+      "show_until": "2083-09-30"
+    },
+    {
+      "tag": "Exam guidelines",
+      "title": "",
+      "text": "Read the official General Registration Exam Guidelines. Exam support: exam_support@nec.gov.np, 01-4520655 / 01-4520656.",
+      "link": "https://nec.gov.np/page/general-registration-exam-guidelines",
+      "link_text": "Open guidelines",
+      "ticker": "",
+      "show_until": ""
+    }
+  ]
+}
