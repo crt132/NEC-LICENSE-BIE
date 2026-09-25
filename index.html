@@ -619,9 +619,9 @@ function startGoat(){ if(gcStarted||!GOATCOUNTER) return; gcStarted=true;
       const n=v=> v==null?null:+String(v).replace(/[^0-9]/g,''); GC={unique:n(j.count_unique), views:n(j.count)}; paintVisits(); }).catch(()=>{});
   setTimeout(load,2500); setInterval(()=>{ if(!document.hidden) load(); }, 300000); }
 function paintVisits(){ const el=document.getElementById('visits'); if(!el) return;
-  if(!VIS && GC){ el.classList.remove('hidden'); el.innerHTML=(GC.unique!=null?`<span><b>${GC.unique.toLocaleString()}</b> visitors reached</span>`:'')+(GC.views!=null?`<span><b>${GC.views.toLocaleString()}</b> total visits</span>`:''); return; }
+  if(!VIS && GC){ el.classList.remove('hidden'); const v=GC.views!=null?GC.views:GC.unique; if(v==null){ el.classList.add('hidden'); return; } el.innerHTML=`<span>👁️ <b>${v.toLocaleString()}</b> visits</span>`; return; }
   if(!VIS){ el.classList.add('hidden'); return; } el.classList.remove('hidden');
-  el.innerHTML=`<span><b>${VIS.devices}</b> ${MODE==='gas'?'devices reached':'users reached'}</span><span><b>${VIS.today}</b> active today</span><span><b>${VIS.week}</b> this week</span><span><b>${VIS.opens}</b> total visits</span>`; }
+  el.innerHTML=`<span>👁️ <b>${(+VIS.opens||0).toLocaleString()}</b> visits</span>`; }
 function DATA_OK(k){ const [s,n]=String(k).split('-').map(Number); return s>=1&&s<=NSETS&&n>=1&&n<=100; }
 async function resolveNames(ids){ if(!UNS||!UNS.profiles||!ids.length) return; try{ const ps=await UNS.profiles(ids); ids.forEach(id=>{ NAMES[id]=(ps&&ps[id]&&ps[id].name)||''; }); }catch(e){} }
 function paintBoard(){
