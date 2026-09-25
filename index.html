@@ -176,6 +176,19 @@ dialog .row{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
 :root[data-theme="dark"] .logo,:root[data-theme="dark"] .flogo{filter:invert(1)}
 .exp-wrap{margin-top:10px}.exp{margin-top:8px;padding:10px 12px;border-left:3px solid var(--ok);background:var(--ok-soft);border-radius:6px;font-size:14.5px;line-height:1.55;white-space:pre-wrap}
 .small{font-size:13.5px}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:16px;margin:0 0 18px}
+@media (max-width:760px){.hero{grid-template-columns:1fr}}
+.hero>div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 18px;min-width:0}
+.cd-lbl{font-size:13px;font-weight:700;letter-spacing:.3px;color:var(--muted);margin-bottom:6px}
+.npdate{font-size:22px;font-weight:700;line-height:1.3}
+.nptime{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--navy)}
+.cd-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:4px 0 8px}
+.cd-grid div{background:var(--bg);border:1px solid var(--line);border-radius:10px;text-align:center;padding:8px 4px}
+.cd-grid b{display:block;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:36px;line-height:1;font-variant-numeric:tabular-nums}
+.cd-grid span{font-size:12.5px;color:var(--muted);font-weight:600}
+.cd-done{margin-top:6px;font-weight:700;color:var(--ok)}
+.cd-form{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0}
+.cd-form select,.cd-form input{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
 .two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:0 0 28px}
 @media (max-width:860px){.two{grid-template-columns:1fr}}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;min-width:0}
@@ -359,6 +372,7 @@ function renderHome(){
     <button class="btn sm ghost" id="resetAll">Reset progress</button>
     <span class="save-state" id="saveState">${dref?'Saved to your account':'Saved on this device'}</span>
   </div></div>
+  ${examHeroHtml()}
   <div class="notice" role="note"><b>Please note:</b> These questions were compiled using AI and may contain errors. Read the full NEC syllabus and standard references before your exam.</div>
   <div class="stats">
     <div class="stat"><b>${dc}/${NSETS}</b><span>Sets completed</span></div>
@@ -409,7 +423,7 @@ function renderHome(){
     <div class="panel"><div class="section-head"><h2>Reported questions</h2></div><div id="repBox"></div></div></div>`;
   h += `</div>`;
   app.innerHTML = h;
-  paintBoard(); paintReps(); bindChapterPractice();
+  paintBoard(); paintReps(); bindChapterPractice(); bindExamHero(); tickClock();
   document.getElementById('boardOpt').onchange=e=>{ S.settings.board=e.target.checked; save(); publishBoard(true); paintBoard(); };
   app.querySelectorAll('[data-go]').forEach(b=> b.onclick=()=>startSet(+b.dataset.go));
   app.querySelectorAll('[data-view]').forEach(b=> b.onclick=()=>{ view={name:'result', sid:b.dataset.view, tab:'all'}; render(); window.scrollTo(0,0); });
@@ -420,6 +434,67 @@ function renderHome(){
   const rst=document.getElementById('revStart'); if(rst) rst.onclick=()=>{ const n=+document.getElementById('revN').value; const keys=activeBank().map(x=>x[0]); S.sessions.rev=newSession(n?keys.slice(0,n):keys); save(); view={name:'exam', sid:'rev'}; render(); };
   const rrs=document.getElementById('revResume'); if(rrs) rrs.onclick=()=>{ view={name:'exam', sid:'rev'}; render(); };
 }
+
+/* ---------- Nepali date / exam countdown ---------- */
+// Bikram Sambat month lengths (2080-2083 verified against two libraries; later years are published projections)
+const BS_START=2080, BS_AD0=Date.UTC(2023,3,14); // 2080 Baisakh 1 = 14 Apr 2023
+const BS_TABLE=[[31,32,31,32,31,30,30,30,29,29,30,30],[31,32,31,32,31,30,30,30,29,30,29,31],[31,31,32,31,31,31,30,29,30,29,30,30],[31,31,32,31,31,31,30,29,30,29,30,30],[31,32,31,32,31,30,30,30,29,29,30,31],[30,32,31,32,31,30,30,30,29,30,29,31],[31,31,32,31,31,31,30,29,30,29,30,30],[31,31,32,31,31,31,30,30,29,30,30,30],[30,31,32,32,30,31,30,30,29,30,30,30],[30,32,31,32,31,30,30,30,29,30,30,30],[30,32,31,32,31,30,30,30,29,30,30,30]];
+const NP_MONTH=['बैशाख','जेठ','असार','साउन','भदौ','असोज','कात्तिक','मंसिर','पुस','माघ','फागुन','चैत'];
+const NP_MONTH_EN=['Baisakh','Jestha','Asar','Shrawan','Bhadra','Ashwin','Kartik','Mangsir','Poush','Magh','Falgun','Chaitra'];
+const NP_DAY=['आइतबार','सोमबार','मङ्गलबार','बुधबार','बिहीबार','शुक्रबार','शनिबार'];
+const npNum=x=>String(x).replace(/[0-9]/g,d=>'०१२३४५६७८९'[d]);
+const NPT_OFF=345*60000; // Nepal Time UTC+5:45, no DST
+function adToBs(dayUtc){ let n=Math.round((dayUtc-BS_AD0)/864e5); if(n<0) return null;
+  for(let yi=0;yi<BS_TABLE.length;yi++) for(let m=0;m<12;m++){ const len=BS_TABLE[yi][m]; if(n<len) return {y:BS_START+yi,m:m+1,d:n+1}; n-=len; } return null; }
+function bsToAd(y,m,d){ const yi=y-BS_START; if(yi<0||yi>=BS_TABLE.length) return null; let n=0;
+  for(let i=0;i<yi;i++) n+=BS_TABLE[i].reduce((a,b)=>a+b,0); for(let i=0;i<m-1;i++) n+=BS_TABLE[yi][i]; return BS_AD0+(n+d-1)*864e5; }
+function bsDays(y,m){ const yi=y-BS_START; return (BS_TABLE[yi]||[])[m-1]||30; }
+function nepalNow(){ const t=new Date(Date.now()+NPT_OFF); return {t, day:Date.UTC(t.getUTCFullYear(),t.getUTCMonth(),t.getUTCDate())}; }
+function npClock(){ const {t,day}=nepalNow(), bs=adToBs(day), h=t.getUTCHours(), mi=t.getUTCMinutes(), se=t.getUTCSeconds();
+  const part = h>=4&&h<12?'बिहान': h>=12&&h<16?'दिउँसो': h>=16&&h<19?'साँझ':'राति';
+  const h12=((h+11)%12)+1, pad=v=>String(v).padStart(2,'0');
+  return { date: bs?`${npNum(bs.y)} ${NP_MONTH[bs.m-1]} ${npNum(bs.d)} गते, ${NP_DAY[t.getUTCDay()]}`:'', time:`${part} ${npNum(h12)}:${npNum(pad(mi))}:${npNum(pad(se))}`,
+    ad: t.toLocaleDateString('en-GB',{timeZone:'UTC',weekday:'long',day:'numeric',month:'long',year:'numeric'}) }; }
+function examTs(){ const e=S.settings.exam; if(!e) return null; const day=bsToAd(e.y,e.m,e.d); if(day===null) return null; const [hh,mm]=(e.t||'10:00').split(':').map(Number); return day+(hh*60+mm)*60000-NPT_OFF; }
+function examHeroHtml(){
+  const e=S.settings.exam, ts=examTs(), c=npClock();
+  let right;
+  if(view.examEdit || !e){ const now=adToBs(nepalNow().day)||{y:2083,m:1,d:1}, cur=e||{y:now.y,m:now.m,d:now.d,t:'10:00'};
+    const years=[]; for(let y=now.y;y<=Math.min(now.y+2,BS_START+BS_TABLE.length-1);y++) years.push(y);
+    right=`<div class="cd-edit"><div class="cd-lbl">${e?'Change your exam date':'Set your exam date'} <span class="muted">(Bikram Sambat, Nepal time)</span></div>
+      <div class="cd-form"><select id="exY" aria-label="Year">${years.map(y=>`<option value="${y}" ${y==cur.y?'selected':''}>${y}</option>`).join('')}</select>
+      <select id="exM" aria-label="Month">${NP_MONTH_EN.map((mn,i)=>`<option value="${i+1}" ${i+1==cur.m?'selected':''}>${mn} (${NP_MONTH[i]})</option>`).join('')}</select>
+      <select id="exD" aria-label="Day"></select>
+      <input type="time" id="exT" value="${esc(cur.t||'10:00')}" aria-label="Exam time">
+      <button class="btn primary sm" id="exSave">Save</button>${e?`<button class="btn sm" id="exCancel">Cancel</button><button class="linkbtn" id="exClear">Remove date</button>`:''}</div>
+      <div class="muted small" id="exAd"></div></div>`; }
+  else { const ad=new Date(ts+NPT_OFF);
+    right=`<div class="cd"><div class="cd-lbl">Time left until your exam <button class="linkbtn" id="exEdit">Change</button></div>
+      <div class="cd-grid" id="cdGrid"><div><b id="cdD">0</b><span>Days</span></div><div><b id="cdH">0</b><span>Hours</span></div><div><b id="cdMi">0</b><span>Minutes</span></div><div><b id="cdS">0</b><span>Seconds</span></div></div>
+      <div class="muted small">${npNum(e.y)} ${NP_MONTH[e.m-1]} ${npNum(e.d)} गते (${ad.toLocaleDateString('en-GB',{timeZone:'UTC',day:'numeric',month:'short',year:'numeric'})}), ${esc(e.t)} Nepal time</div>
+      <div id="cdDone" class="cd-done hidden">Exam day is here. Wish you all the best!</div></div>`; }
+  return `<div class="hero"><div class="npclock"><div class="cd-lbl">आजको मिति र समय</div><div class="npdate" id="npDate">${c.date}</div><div class="nptime" id="npTime">${c.time}</div><div class="muted small" id="npAd">${c.ad}</div></div>${right}</div>`; }
+function bindExamHero(){
+  const ed=document.getElementById('exEdit'); if(ed) ed.onclick=()=>{ view.examEdit=true; render(); };
+  const Y=document.getElementById('exY'); if(!Y) return;
+  const M=document.getElementById('exM'), D=document.getElementById('exD'), T=document.getElementById('exT'), A=document.getElementById('exAd');
+  const cur=S.settings.exam, want=cur?cur.d:(adToBs(nepalNow().day)||{d:1}).d;
+  const fillD=keep=>{ const n=bsDays(+Y.value,+M.value), v=Math.min(keep||+D.value||1,n); D.innerHTML=Array.from({length:n},(_,i)=>`<option value="${i+1}" ${i+1==v?'selected':''}>${i+1}</option>`).join(''); showAd(); };
+  const showAd=()=>{ const day=bsToAd(+Y.value,+M.value,+D.value); A.textContent= day===null?'':'= '+new Date(day).toLocaleDateString('en-GB',{timeZone:'UTC',weekday:'long',day:'numeric',month:'long',year:'numeric'}); };
+  Y.onchange=()=>fillD(); M.onchange=()=>fillD(); D.onchange=showAd; fillD(want);
+  document.getElementById('exSave').onclick=()=>{ S.settings.exam={y:+Y.value,m:+M.value,d:+D.value,t:T.value||'10:00'}; view.examEdit=false; save(); render(); };
+  const c=document.getElementById('exCancel'); if(c) c.onclick=()=>{ view.examEdit=false; render(); };
+  const x=document.getElementById('exClear'); if(x) x.onclick=()=>{ delete S.settings.exam; view.examEdit=false; save(); render(); };
+}
+function tickClock(){
+  const d=document.getElementById('npDate'); if(!d) return;
+  const c=npClock(); d.textContent=c.date; document.getElementById('npTime').textContent=c.time; document.getElementById('npAd').textContent=c.ad;
+  const g=document.getElementById('cdGrid'); if(g){ const ts=examTs(); let r=Math.max(0,Math.floor((ts-Date.now())/1000));
+    document.getElementById('cdD').textContent=Math.floor(r/86400); document.getElementById('cdH').textContent=String(Math.floor(r%86400/3600)).padStart(2,'0');
+    document.getElementById('cdMi').textContent=String(Math.floor(r%3600/60)).padStart(2,'0'); document.getElementById('cdS').textContent=String(r%60).padStart(2,'0');
+    document.getElementById('cdDone').classList.toggle('hidden', r>0); }
+}
+setInterval(()=>{ if(!document.hidden) tickClock(); },1000);
 
 /* ---------- chapter stats / progress ---------- */
 function lastRecords(){ const out=[]; for(let i=1;i<=NSETS;i++){ const L0=getLast('s'+i); if(L0) out.push(L0); } const c=getLast('ch'); if(c) out.push(c); return out; }
