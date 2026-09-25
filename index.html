@@ -176,6 +176,7 @@ dialog .row{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
 :root[data-theme="dark"] .logo,:root[data-theme="dark"] .flogo{filter:invert(1)}
 .exp-wrap{margin-top:10px}.exp{margin-top:8px;padding:10px 12px;border-left:3px solid var(--ok);background:var(--ok-soft);border-radius:6px;font-size:14.5px;line-height:1.55;white-space:pre-wrap}
 .small{font-size:13.5px}
+body.noshared .two.shared{display:none}
 .conn{font-size:12.5px;margin:0 0 10px;color:var(--muted)}.conn.bad{color:var(--bad)}.conn.ok{color:var(--ok)}
 .visits{display:flex;justify-content:center;flex-wrap:wrap;gap:6px 18px;margin:0 0 14px;font-weight:600;color:var(--ink)}.visits b{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:20px;margin-right:3px}
 .hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:16px;margin:0 0 18px}
@@ -240,7 +241,8 @@ table.lb tr.me td{background:var(--ok-soft)}
    Paste your Google Apps Script web app URL (ends with /exec) below.
    Leave empty to disable. On claude.ai the Claude account store is used.
    ===================================================================== */
-const BACKEND_URL = "https://script.google.com/macros/s/AKfycbxxdaMb32HwAF2eauFqfwu_vOwSvIY7dGaIUoqlCre-a1yHscYs329zLXx7eWLlw3UlbA/exec";
+const BACKEND_URL = "";
+const GOATCOUNTER = "bie078"; // visitor counter for the GitHub copy (bie078.goatcounter.com)
 (function(){
 const DATA = JSON.parse(document.getElementById('qdata').textContent);
 const NSETS = DATA.length, PASS = 0.5, LS = 'nec-ie-practice-v1', L = 'abcd';
@@ -420,7 +422,7 @@ function renderHome(){
     if (bank.length>12) h += `<div style="margin-top:12px"><button class="linkbtn" id="bankToggle">${showAll?'Show fewer':'Show all '+bank.length}</button></div>`;
   }
   h += `</div>`;
-  h += `<div class="two"><div class="panel"><div class="section-head"><h2>Batch leaderboard</h2>
+  h += `<div class="two shared"><div class="panel"><div class="section-head"><h2>Batch leaderboard</h2>
       <label class="small"><input type="checkbox" id="boardOpt" ${S.settings.board!==false?'checked':''}> Show me</label></div><div id="boardBox"></div></div>
     <div class="panel"><div class="section-head"><h2>Reported questions</h2></div><div id="repBox"></div></div></div>`;
   h += `</div>`;
@@ -587,7 +589,7 @@ async function startShared(){
   publishBoard();
 }
 /* ---- Google Apps Script backend (GitHub Pages) ---- */
-function fallbackShared(){ if(sharedOn) return; if(!BACKEND_URL){ paintConn(); return; }
+function fallbackShared(){ if(sharedOn) return; startGoat(); if(!BACKEND_URL){ document.body.classList.add('noshared'); paintConn(); return; }
   let id=null; try{ id=localStorage.getItem('nec-ie-device'); if(!id){ id=Array.from(crypto.getRandomValues(new Uint8Array(12)),x=>x.toString(16).padStart(2,'0')).join(''); localStorage.setItem('nec-ie-device',id); } }catch(e){ id='x'+Math.random().toString(16).slice(2,18); }
   UID=id; MODE='gas'; sharedOn=true;
   let first=true; try{ first=!sessionStorage.getItem('nec-ie-visit'); sessionStorage.setItem('nec-ie-visit','1'); }catch(e){}
@@ -608,9 +610,16 @@ async function gasRefresh(){ if(gasBusy) return; gasBusy=true;
   }catch(e){ GAS_ERR=String(e&&e.message||e); paintConn(); const b=document.getElementById('boardBox'); if(b&&!BOARD.length) b.innerHTML='<div class="empty">Could not reach the shared server.</div>'; }
   gasBusy=false; }
 function paintConn(){ const el=document.getElementById('conn'); if(!el) return;
-  if(MODE!=='gas'){ el.textContent= (!BACKEND_URL && !sharedOn) ? 'Shared server: not set (BACKEND_URL is empty)' : ''; return; }
+  if(MODE!=='gas'){ el.textContent=''; return; }
   el.textContent = GAS_ERR ? 'Shared server: not connected ('+GAS_ERR+')' : 'Shared server: connected'; el.className='conn '+(GAS_ERR?'bad':'ok'); }
+let GC=null, gcStarted=false;
+function startGoat(){ if(gcStarted||!GOATCOUNTER) return; gcStarted=true;
+  try{ const sc=document.createElement('script'); sc.async=true; sc.src='https://gc.zgo.at/count.js'; sc.setAttribute('data-goatcounter','https://'+GOATCOUNTER+'.goatcounter.com/count'); document.head.appendChild(sc); }catch(e){}
+  const load=()=> fetch('https://'+GOATCOUNTER+'.goatcounter.com/counter/TOTAL.json?t='+Date.now()).then(r=>r.ok?r.json():null).then(j=>{ if(!j) return;
+      const n=v=> v==null?null:+String(v).replace(/[^0-9]/g,''); GC={unique:n(j.count_unique), views:n(j.count)}; paintVisits(); }).catch(()=>{});
+  setTimeout(load,2500); setInterval(()=>{ if(!document.hidden) load(); }, 300000); }
 function paintVisits(){ const el=document.getElementById('visits'); if(!el) return;
+  if(!VIS && GC){ el.classList.remove('hidden'); el.innerHTML=(GC.unique!=null?`<span><b>${GC.unique.toLocaleString()}</b> visitors reached</span>`:'')+(GC.views!=null?`<span><b>${GC.views.toLocaleString()}</b> total visits</span>`:''); return; }
   if(!VIS){ el.classList.add('hidden'); return; } el.classList.remove('hidden');
   el.innerHTML=`<span><b>${VIS.devices}</b> ${MODE==='gas'?'devices reached':'users reached'}</span><span><b>${VIS.today}</b> active today</span><span><b>${VIS.week}</b> this week</span><span><b>${VIS.opens}</b> total visits</span>`; }
 function DATA_OK(k){ const [s,n]=String(k).split('-').map(Number); return s>=1&&s<=NSETS&&n>=1&&n<=100; }
