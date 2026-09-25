@@ -196,7 +196,12 @@ body.in-exam .nbar,body.in-exam .nb-panel{display:none}
 .nb-tab td{vertical-align:top;white-space:normal}.nb-tab tr.st-done{opacity:.55}
 .nb-tab tr.st-exam td,.nb-tab tr.st-open td,.nb-tab tr.st-late td,.nb-tab tr.st-now td{background:rgba(27,122,62,.09)}
 .nb-st{font-weight:700;font-size:13px}
-body.noshared .two.shared{display:none}
+body.noshared .two.shared,body.noshared .shared-only{display:none}
+.notesp{margin:0 0 28px}.nform{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:0 0 14px;background:var(--bg)}
+.nform input:not([type=file]),.nform select,.nform textarea{display:block;width:100%;margin-top:5px;font:inherit;font-weight:400;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);box-sizing:border-box}.nform input[type=file]{display:block;margin-top:6px;font-weight:400}
+.nrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media (max-width:600px){.nrow{grid-template-columns:1fr}}
+.nfilter{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px}.nfilter select,.nfilter input{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.note-item{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--line)}.note-ic{font-size:26px;line-height:1}.note-body{min-width:0;flex:1}.note-t{font-weight:700}.note-txt{margin-top:6px;font-size:14.5px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}.note-acts{margin-top:8px;display:flex;gap:12px;align-items:center}
 .conn{font-size:12.5px;margin:0 0 10px;color:var(--muted)}.conn.bad{color:var(--bad)}.conn.ok{color:var(--ok)}
 .visits{display:flex;justify-content:center;flex-wrap:wrap;gap:6px 18px;margin:0 0 14px;font-weight:600;color:var(--ink)}.visits b{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:20px;margin-right:3px}
 .hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:16px;margin:0 0 18px}
@@ -279,7 +284,7 @@ const pct = x => Math.round(x*100)+'%';
 const CH=['Basic Mechanical Engineering','Engineering Thermodynamics','Fluid Mechanics and Machines','Engineering Mechanics and SOM','Manufacturing and Production','Industrial Management','Decision Making','Industrial Systems','Facility Design and Maintenance','Project Planning and Implementation'];
 const chOf = k => Math.ceil(+k.split('-')[1]/10);
 const isSet = sid => /^s\d+$/.test(sid);
-let GAS_ERR='', VIS=null, MODE=null, UID=null, UNS=null, BOARD=[], NAMES={}, MYREP=[], REPS={}, sharedOn=false, canWrite=true;
+let NOTES_LIST=[], GAS_ERR='', VIS=null, MODE=null, UID=null, UNS=null, BOARD=[], NAMES={}, MYREP=[], REPS={}, sharedOn=false, canWrite=true;
 
 /* ---------- state ---------- */
 function blank(){ return {v:1, updatedAt:0, settings:{shuffle:true, minutes:120}, sessions:{}, results:{}, bank:{}}; }
@@ -448,12 +453,16 @@ function renderHome(){
     if (bank.length>12) h += `<div style="margin-top:12px"><button class="linkbtn" id="bankToggle">${showAll?'Show fewer':'Show all '+bank.length}</button></div>`;
   }
   h += `</div>`;
+  h += `<div class="panel shared-only notesp"><div class="section-head"><h2>Shared notes and files</h2><button class="btn sm primary" id="noteNew">+ Upload a note</button></div>
+    <p class="muted small" style="margin:-6px 0 12px">Notes, formula sheets and past questions shared by batch members. Anyone with this page can see and download them.</p>
+    <div id="noteForm" class="hidden"></div><div id="notesBox"></div></div>`;
   h += `<div class="two shared"><div class="panel"><div class="section-head"><h2>Batch leaderboard</h2>
       <label class="small"><input type="checkbox" id="boardOpt" ${S.settings.board!==false?'checked':''}> Show me</label></div><div id="boardBox"></div></div>
     <div class="panel"><div class="section-head"><h2>Reported questions</h2></div><div id="repBox"></div></div></div>`;
   h += `</div>`;
   app.innerHTML = h;
-  paintBoard(); paintReps(); bindChapterPractice(); bindExamHero(); tickClock();
+  paintBoard(); paintReps(); paintNotes(); bindChapterPractice(); bindExamHero(); tickClock();
+  document.getElementById('noteNew').onclick=toggleNoteForm;
   document.getElementById('boardOpt').onchange=e=>{ S.settings.board=e.target.checked; save(); publishBoard(true); paintBoard(); };
   app.querySelectorAll('[data-go]').forEach(b=> b.onclick=()=>startSet(+b.dataset.go));
   app.querySelectorAll('[data-view]').forEach(b=> b.onclick=()=>{ view={name:'result', sid:b.dataset.view, tab:'all'}; render(); window.scrollTo(0,0); });
@@ -526,59 +535,70 @@ function tickClock(){
 }
 setInterval(()=>{ if(!document.hidden) tickClock(); },1000);
 
-/* ---------- NEC notice board (exam-related only) ---------- */
-// Compiled from NEC's published 2083/84 licensing exam calendar and result notices. Last checked: 2083 Ashwin 9.
-const NB_CHECKED='2083 Ashwin 9 (25 Sep 2026)';
-const NB_ROUNDS=[
-  {n:'1st',app:[[2083,4,28],[2083,5,17]],late:[[2083,5,18],[2083,5,24]],exam:[2083,6,17]},
-  {n:'2nd',app:[[2083,8,1],[2083,8,21]],late:[[2083,8,22],[2083,8,28]],exam:[2083,9,20]},
-  {n:'3rd',app:[[2083,10,22],[2083,11,13]],late:[[2083,11,14],[2083,11,20]],exam:[2083,12,10]},
-  {n:'4th',app:[[2084,1,20],[2084,2,9]],late:[[2084,2,10],[2084,2,16]],exam:[2084,3,4]}];
-const NB_LINKS={notices:'https://nec.gov.np/notices', register:'https://register.nec.gov.np/', result:'https://nec.gov.np/result', guide:'https://nec.gov.np/page/general-registration-exam-guidelines'};
-const bsD=a=>bsToAd(a[0],a[1],a[2]);
-const bsTxt=a=>`${a[0]} ${NP_MONTH_EN[a[1]-1]} ${a[2]}`;
+/* ---------- NEC notice board (exam-related only) ----------
+   Notices are read from notices.json (same folder as this page) so they can be
+   edited on GitHub without touching this code. The copy below is used only when
+   notices.json cannot be loaded. */
+const NB_DEFAULT={"checked": "2083 Ashwin 9", "calendar_title": "Licensing exam calendar 2083/84", "rounds": [{"round": "1st", "apply_from": "2083-04-28", "apply_to": "2083-05-17", "double_fee_to": "2083-05-24", "exam": "2083-06-17"}, {"round": "2nd", "apply_from": "2083-08-01", "apply_to": "2083-08-21", "double_fee_to": "2083-08-28", "exam": "2083-09-20"}, {"round": "3rd", "apply_from": "2083-10-22", "apply_to": "2083-11-13", "double_fee_to": "2083-11-20", "exam": "2083-12-10"}, {"round": "4th", "apply_from": "2084-01-20", "apply_to": "2084-02-09", "double_fee_to": "2084-02-16", "exam": "2084-03-04"}], "notices": [{"tag": "Result", "title": "13th General Registered Engineer licensing exam results published.", "text": "Exams were held on 2083 Asar 21 at ICTC, IOE Pulchowk (Kathmandu) and 2083 Asar 23 at IOE Paschimanchal Campus (Pokhara).", "link": "https://nec.gov.np/result", "link_text": "Check registration status", "ticker": "13th licensing exam results published (held 2083 Asar 21 Kathmandu and 2083 Asar 23 Pokhara).", "show_until": "2083-09-30"}, {"tag": "Exam guidelines", "title": "", "text": "Read the official General Registration Exam Guidelines. Exam support: exam_support@nec.gov.np, 01-4520655 / 01-4520656.", "link": "https://nec.gov.np/page/general-registration-exam-guidelines", "link_text": "Open guidelines", "ticker": "", "show_until": ""}]};
+let NB=NB_DEFAULT;
+const NB_LINKS={notices:'https://nec.gov.np/notices', register:'https://register.nec.gov.np/'};
+const parseBs=v=>{ const m=String(v||'').trim().match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/); if(!m) return null; const a=[+m[1],+m[2],+m[3]]; return bsToAd(a[0],a[1],a[2])===null?null:a; };
+const bsD=a=>a?bsToAd(a[0],a[1],a[2]):null;
+const bsTxt=a=>a?`${a[0]} ${NP_MONTH_EN[a[1]-1]} ${a[2]}`:'–';
 const adTxt=a=>{ const d=bsD(a); return d===null?'':new Date(d).toLocaleDateString('en-GB',{timeZone:'UTC',day:'numeric',month:'short',year:'numeric'}); };
 const dayDiff=a=>{ const d=bsD(a); return d===null?null:Math.round((d-nepalNow().day)/864e5); };
 const inDays=n=> n===0?'today':n===1?'tomorrow':`in ${n} days`;
+function nbRounds(){ return (NB.rounds||[]).map(r=>{ const app0=parseBs(r.apply_from), app1=parseBs(r.apply_to), l1=parseBs(r.double_fee_to), ex=parseBs(r.exam);
+    if(!ex) return null; const l0= app1 ? adToBs(bsD(app1)+864e5) : null;
+    return {n:String(r.round||''), app:[app0,app1], late:[l0?[l0.y,l0.m,l0.d]:null,l1], exam:ex}; }).filter(Boolean); }
 function roundStatus(r){
   const t=nepalNow().day, a0=bsD(r.app[0]), a1=bsD(r.app[1]), l1=bsD(r.late[1]), ex=bsD(r.exam);
-  if(t<a0) return {k:'soon', txt:`Applications open ${inDays(dayDiff(r.app[0]))}`};
-  if(t<=a1) return {k:'open', txt:`Applications open now, close ${inDays(dayDiff(r.app[1]))}`};
-  if(t<=l1) return {k:'late', txt:`Late applications with double fee, close ${inDays(dayDiff(r.late[1]))}`};
+  if(a0!==null && t<a0) return {k:'soon', txt:`Applications open ${inDays(dayDiff(r.app[0]))}`};
+  if(a1!==null && t<=a1) return {k:'open', txt:`Applications open now, close ${inDays(dayDiff(r.app[1]))}`};
+  if(l1!==null && t<=l1) return {k:'late', txt:`Late applications with double fee, close ${inDays(dayDiff(r.late[1]))}`};
   if(t<ex) return {k:'exam', txt:`Exam starts ${inDays(dayDiff(r.exam))}`};
   if(t-ex<10*864e5) return {k:'now', txt:'Exam in progress'};
   return {k:'done', txt:'Held'};
 }
+function nbNotices(){ const t=nepalNow().day; return (NB.notices||[]).filter(n=>{ const u=parseBs(n.show_until); return !u || t<=bsD(u); }); }
 function tickerItems(){
-  const items=[]; const active=NB_ROUNDS.filter(r=>roundStatus(r).k!=='done');
-  active.slice(0,2).forEach(r=>{ const st=roundStatus(r);
-    if(st.k==='exam'||st.k==='now') items.push(`<b>${r.n} licensing exam 2083/84</b> starts ${bsTxt(r.exam)} (${adTxt(r.exam)}) — ${st.txt}. Check your admit card on register.nec.gov.np.`);
-    else items.push(`<b>${r.n} round applications</b>: ${bsTxt(r.app[0])} to ${bsTxt(r.app[1])}, double fee until ${bsTxt(r.late[1])}. Exam from ${bsTxt(r.exam)} — ${st.txt}.`); });
-  items.push(`<b>13th licensing exam results published</b> (held 2083 Asar 21, Kathmandu and 2083 Asar 23, Pokhara).`);
-  items.push(`<b>Exam calendar 2083/84</b>: exams start 2083 Ashwin 17, Poush 20, Chaitra 10 and 2084 Asar 4.`);
+  const items=[], title=esc(NB.calendar_title||'Licensing exam');
+  nbRounds().filter(r=>roundStatus(r).k!=='done').slice(0,2).forEach(r=>{ const st=roundStatus(r);
+    if(st.k==='exam'||st.k==='now') items.push(`<b>${esc(r.n)} round (${title})</b> exam starts ${bsTxt(r.exam)} (${adTxt(r.exam)}) — ${st.txt}. Check your admit card on register.nec.gov.np.`);
+    else items.push(`<b>${esc(r.n)} round applications</b>: ${bsTxt(r.app[0])} to ${bsTxt(r.app[1])}${r.late[1]?`, double fee until ${bsTxt(r.late[1])}`:''}. Exam from ${bsTxt(r.exam)} — ${st.txt}.`); });
+  nbNotices().forEach(n=>{ if(n.ticker) items.push(`<b>${esc(n.tag||'Notice')}:</b> ${esc(n.ticker)}`); });
+  if(!items.length) items.push('Check the official NEC notice page for the latest exam notices.');
   return items; }
 function paintTicker(){ const m=document.getElementById('nbMove'); if(!m) return;
   const html=tickerItems().map(t=>`<span class="nb-item">${t}</span>`).join('<span class="nb-sep" aria-hidden="true">✦</span>');
   m.innerHTML=html+'<span class="nb-sep" aria-hidden="true">✦</span><span aria-hidden="true">'+html+'</span>'; }
+const safeUrl=u=>/^https?:\/\//i.test(String(u||''))?String(u):'';
 function paintNoticePanel(){ const p=document.getElementById('nbPanel'); if(!p) return;
-  const rows=NB_ROUNDS.map(r=>{ const st=roundStatus(r); return `<tr class="st-${st.k}"><td><b>${r.n}</b></td><td>${bsTxt(r.app[0])} – ${bsTxt(r.app[1])}</td><td>${bsTxt(r.late[0])} – ${bsTxt(r.late[1])}</td><td><b>${bsTxt(r.exam)}</b><div class="muted small">${adTxt(r.exam)}</div></td><td><span class="nb-st">${st.txt}</span>${st.k!=='done'&&st.k!=='now'?`<br><button class="linkbtn" data-nbset="${r.exam.join('-')}">Use as my exam date</button>`:''}</td></tr>`; }).join('');
+  const rounds=nbRounds();
+  const rows=rounds.map(r=>{ const st=roundStatus(r); return `<tr class="st-${st.k}"><td><b>${esc(r.n)}</b></td><td>${bsTxt(r.app[0])} – ${bsTxt(r.app[1])}</td><td>${r.late[0]?bsTxt(r.late[0])+' – ':''}${bsTxt(r.late[1])}</td><td><b>${bsTxt(r.exam)}</b><div class="muted small">${adTxt(r.exam)}</div></td><td><span class="nb-st">${st.txt}</span>${st.k!=='done'&&st.k!=='now'?`<br><button class="linkbtn" data-nbset="${r.exam.join('-')}">Use as my exam date</button>`:''}</td></tr>`; }).join('');
+  const cards=nbNotices().map(n=>{ const u=safeUrl(n.link); return `<div class="nb-card"><div class="nb-tag">${esc(n.tag||'Notice')}</div>${n.title?`<b>${esc(n.title)}</b>`:''}${n.text?`<p class="small">${esc(n.text)}</p>`:''}${u?`<p class="small"><a href="${esc(u)}" target="_blank" rel="noopener">${esc(n.link_text||'Open')}</a></p>`:''}</div>`; }).join('');
   p.innerHTML=`<div class="nb-in"><div class="nb-head"><h2>NEC exam notices</h2><button class="btn sm" id="nbClose">Close</button></div>
-   <div class="nb-card nb-hl"><div class="nb-tag">Licensing exam calendar 2083/84</div>
+   ${rounds.length?`<div class="nb-card nb-hl"><div class="nb-tag">${esc(NB.calendar_title||'Licensing exam calendar')}</div>
     <div class="tablewrap"><table class="lb nb-tab"><thead><tr><th>Round</th><th>Application</th><th>Double fee</th><th>Exam starts</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>
-    <p class="muted small">Apply online at <a href="${NB_LINKS.register}" target="_blank" rel="noopener">register.nec.gov.np</a>. Exact exam dates and times for each candidate are on the admit card in your dashboard.</p></div>
-   <div class="nb-card"><div class="nb-tag">Result</div><b>13th General Registered Engineer licensing exam results published.</b>
-    <p class="small">Exams were held on 2083 Asar 21 at ICTC, IOE Pulchowk (Kathmandu) and 2083 Asar 23 at IOE Paschimanchal Campus (Pokhara). <a href="${NB_LINKS.result}" target="_blank" rel="noopener">Check registration status</a></p></div>
-   <div class="nb-card"><div class="nb-tag">Exam guidelines</div><p class="small">Read the official <a href="${NB_LINKS.guide}" target="_blank" rel="noopener">General Registration Exam Guidelines</a>. Exam support: <a href="mailto:exam_support@nec.gov.np">exam_support@nec.gov.np</a>, 01-4520655 / 01-4520656.</p></div>
-   <p class="muted small">Exam-related notices only, compiled from NEC's published notices. Last checked ${NB_CHECKED}. Dates can change, so always confirm on the <a href="${NB_LINKS.notices}" target="_blank" rel="noopener">official NEC notice page</a>.</p></div>`;
+    <p class="muted small">Apply online at <a href="${NB_LINKS.register}" target="_blank" rel="noopener">register.nec.gov.np</a>. Exact exam dates and times for each candidate are on the admit card in your dashboard.</p></div>`:''}
+   ${cards}
+   <p class="muted small">Exam-related notices only, compiled from NEC's published notices${NB.checked?`. Last updated ${esc(NB.checked)}`:''}. Dates can change, so always confirm on the <a href="${NB_LINKS.notices}" target="_blank" rel="noopener">official NEC notice page</a>.</p></div>`;
   document.getElementById('nbClose').onclick=closeNotices;
   p.querySelectorAll('[data-nbset]').forEach(b=> b.onclick=()=>{ const [y,m,d]=b.dataset.nbset.split('-').map(Number); S.settings.exam={y,m,d,t:(S.settings.exam&&S.settings.exam.t)||'10:00'}; save(); closeNotices(); if(view.name==='home') render(); window.scrollTo(0,0); });
 }
 function openNotices(){ paintNoticePanel(); const p=document.getElementById('nbPanel'); p.classList.remove('hidden'); document.getElementById('nbOpen').setAttribute('aria-expanded','true'); const c=document.getElementById('nbClose'); if(c) c.focus(); }
-function closeNotices(){ const p=document.getElementById('nbPanel'); if(!p||p.classList.contains('hidden')) return; p.classList.add('hidden'); const b=document.getElementById('nbOpen'); b.setAttribute('aria-expanded','false'); }
+function closeNotices(){ const p=document.getElementById('nbPanel'); if(!p||p.classList.contains('hidden')) return; p.classList.add('hidden'); document.getElementById('nbOpen').setAttribute('aria-expanded','false'); }
 document.getElementById('nbOpen').onclick=()=>{ const p=document.getElementById('nbPanel'); if(p.classList.contains('hidden')) openNotices(); else closeNotices(); };
 document.querySelector('.nb-track').onclick=openNotices;
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeNotices(); });
 paintTicker(); setInterval(paintTicker, 3600000);
+(function loadNotices(){
+  if(!/^https?:$/.test(location.protocol)) return;
+  fetch('notices.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{
+    if(!j||typeof j!=='object'||(!Array.isArray(j.rounds)&&!Array.isArray(j.notices))) return;
+    NB=j; paintTicker(); const p=document.getElementById('nbPanel'); if(p&&!p.classList.contains('hidden')) paintNoticePanel();
+  }).catch(e=>{ console.warn('notices.json not loaded, using built-in notices', e); });
+})();
 
 /* ---------- chapter stats / progress ---------- */
 function lastRecords(){ const out=[]; for(let i=1;i<=NSETS;i++){ const L0=getLast('s'+i); if(L0) out.push(L0); } const c=getLast('ch'); if(c) out.push(c); return out; }
@@ -678,14 +698,14 @@ function fallbackShared(){ if(sharedOn) return; startGoat(); if(!BACKEND_URL){ d
   document.addEventListener('visibilitychange',()=>{ if(!document.hidden) gasRefresh(); });
 }
 async function gasGet(){ const r=await fetch(BACKEND_URL+'?action=list&t='+Date.now()); const txt=await r.text(); let d; try{ d=JSON.parse(txt); }catch(e){ throw new Error(/<html/i.test(txt)?'server returned a web page: set access to Anyone and deploy a new version':'bad response'); } if(!d.ok&&d.ok!==undefined) throw new Error('server error'); return d; }
-async function gasPost(obj){ const r=await fetch(BACKEND_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(obj)}); const j=await r.json(); if(!j.ok) throw new Error('rejected'); return j; }
+async function gasPost(obj){ const r=await fetch(BACKEND_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(obj)}); const j=await r.json(); if(!j.ok) throw new Error(j.error||'rejected'); return j; }
 let gasBusy=false;
 async function gasRefresh(){ if(gasBusy) return; gasBusy=true;
   try{ const d=await gasGet();
     BOARD=(d.board||[]).map(b=>({id:String(b.id),sets:+b.sets||0,pts:+b.pts||0,best:+b.best||0,avg:+b.avg||0})); NAMES={}; (d.board||[]).forEach(b=>{ NAMES[String(b.id)]=String(b.name||''); });
     const m={}; MYREP=[]; (d.reports||[]).forEach(it=>{ const k=String(it.k); if(!DATA_OK(k)) return; if(String(it.id)===UID) MYREP.push({k,r:it.r,n:it.n,at:+it.at});
       const e=m[k]||(m[k]={n:0,r:{},notes:[],at:0}); e.n++; e.r[it.r]=(e.r[it.r]||0)+1; if(it.n) e.notes.push(String(it.n).slice(0,300)); e.at=Math.max(e.at,+it.at||0); });
-    REPS=m; if(d.visits) VIS=d.visits; paintVisits(); paintBoard(); paintReps(); if(view.name==='result' && !Object.keys(expBusy).length && !document.querySelector('dialog[open]')) renderResult();
+    REPS=m; if(d.visits) VIS=d.visits; if(Array.isArray(d.notes)){ NOTES_LIST=d.notes; paintNotes(); } paintVisits(); paintBoard(); paintReps(); if(view.name==='result' && !Object.keys(expBusy).length && !document.querySelector('dialog[open]')) renderResult();
     GAS_ERR=''; paintConn();
   }catch(e){ GAS_ERR=String(e&&e.message||e); paintConn(); const b=document.getElementById('boardBox'); if(b&&!BOARD.length) b.innerHTML='<div class="empty">Could not reach the shared server.</div>'; }
   gasBusy=false; }
@@ -702,6 +722,59 @@ function paintVisits(){ const el=document.getElementById('visits'); if(!el) retu
   if(!VIS && GC){ el.classList.remove('hidden'); const v=GC.views!=null?GC.views:GC.unique; if(v==null){ el.classList.add('hidden'); return; } el.innerHTML=`<span>👁️ <b>${v.toLocaleString()}</b> visits</span>`; return; }
   if(!VIS){ el.classList.add('hidden'); return; } el.classList.remove('hidden');
   el.innerHTML=`<span>👁️ <b>${(+VIS.opens||0).toLocaleString()}</b> visits</span>`; }
+/* ---- shared notes (Apps Script + Google Drive) ---- */
+const NOTE_EXT='.pdf,.png,.jpg,.jpeg,.webp,.gif,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv', NOTE_MAX=10*1024*1024;
+const fmtSize=b=> b>=1048576?(b/1048576).toFixed(1)+' MB': b>=1024?Math.round(b/1024)+' KB': b+' B';
+const fileIcon=n=>{ const e=String(n||'').split('.').pop().toLowerCase(); return e==='pdf'?'📕':/^(png|jpe?g|webp|gif)$/.test(e)?'🖼️':/^(doc|docx|txt)$/.test(e)?'📄':/^(ppt|pptx)$/.test(e)?'📊':/^(xls|xlsx|csv)$/.test(e)?'📗':'📎'; };
+function toggleNoteForm(){ const f=document.getElementById('noteForm'); if(!f) return;
+  if(!f.classList.contains('hidden')){ f.classList.add('hidden'); f.innerHTML=''; return; }
+  if(MODE!=='gas'){ f.classList.remove('hidden'); f.innerHTML='<div class="empty">Uploading needs the shared server, which is not connected on this copy of the page.</div>'; return; }
+  f.classList.remove('hidden');
+  f.innerHTML=`<div class="nform"><label class="fld">Title * <input id="nfTitle" maxlength="120" placeholder="e.g. Thermodynamics formula sheet"></label>
+   <div class="nrow"><label class="fld">Your name * <input id="nfName" maxlength="40" value="${esc(S.settings.name||'')}"></label>
+   <label class="fld">Chapter <select id="nfCh"><option value="0">General</option>${CH.map((c,i)=>`<option value="${i+1}">${i+1}. ${esc(c)}</option>`).join('')}</select></label></div>
+   <label class="fld">Note (optional) <textarea id="nfText" rows="3" maxlength="3000" placeholder="Short description, tips or a text note"></textarea></label>
+   <label class="fld">File (optional, max 10 MB: PDF, image, Word, PowerPoint, Excel, text) <input type="file" id="nfFile" accept="${NOTE_EXT}"></label>
+   <p class="muted small">Shared publicly with everyone who opens this page. Do not upload copyrighted books or personal information.</p>
+   <p id="nfMsg" class="small" role="status"></p>
+   <div class="row" style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" id="nfCancel">Cancel</button><button class="btn primary" id="nfSend">Upload</button></div></div>`;
+  document.getElementById('nfCancel').onclick=toggleNoteForm;
+  document.getElementById('nfSend').onclick=sendNote;
+  document.getElementById('nfTitle').focus();
+}
+async function sendNote(){
+  const msg=document.getElementById('nfMsg'), btn=document.getElementById('nfSend');
+  const title=document.getElementById('nfTitle').value.trim(), name=document.getElementById('nfName').value.trim().replace(/^[=+\-@]+/,''), ch=+document.getElementById('nfCh').value, text=document.getElementById('nfText').value.trim(), fi=document.getElementById('nfFile').files[0];
+  if(!title||!name){ msg.textContent='Please enter a title and your name.'; return; }
+  if(!fi&&!text){ msg.textContent='Add a file or write a note.'; return; }
+  if(fi){ const ext='.'+fi.name.split('.').pop().toLowerCase(); if(!NOTE_EXT.split(',').includes(ext)){ msg.textContent='This file type is not allowed.'; return; } if(fi.size>NOTE_MAX){ msg.textContent='The file is larger than 10 MB.'; return; } }
+  btn.disabled=true; msg.textContent=fi?'Uploading '+fmtSize(fi.size)+'…':'Saving…';
+  try{
+    let file=null; if(fi){ const data=await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(',')[1]); r.onerror=()=>rej(new Error('Could not read the file')); r.readAsDataURL(fi); }); file={name:fi.name,type:fi.type||'',data}; }
+    await gasPost({action:'note',id:UID,name,title,ch,text,file});
+    S.settings.name=name; save(); msg.textContent='Uploaded. Thank you for sharing!';
+    await gasRefresh(); setTimeout(()=>{ const f=document.getElementById('noteForm'); if(f&&!f.classList.contains('hidden')) toggleNoteForm(); },900);
+  }catch(e){ btn.disabled=false; msg.textContent='Upload failed: '+((e&&e.message)||'try again')+'.'; }
+}
+function paintNotes(){ const box=document.getElementById('notesBox'); if(!box) return;
+  const pn=box.closest('.notesp'); if(pn) pn.style.display = MODE==='gas' ? '' : 'none';
+  if(MODE!=='gas') return;
+  const fc=view.noteCh||0, q=(view.noteQ||'').toLowerCase();
+  const list=NOTES_LIST.filter(n=>(!fc||+n.ch===fc)&&(!q||(String(n.title)+' '+String(n.text)+' '+String(n.name)).toLowerCase().includes(q)));
+  const filt=`<div class="nfilter"><select id="nFiltCh" aria-label="Filter by chapter"><option value="0">All chapters</option>${CH.map((c,i)=>`<option value="${i+1}" ${fc===i+1?'selected':''}>${i+1}. ${esc(c)}</option>`).join('')}</select>
+    <input id="nFiltQ" type="search" placeholder="Search notes" value="${esc(view.noteQ||'')}" aria-label="Search notes"><span class="muted small">${list.length} of ${NOTES_LIST.length}</span></div>`;
+  const items=list.slice(0,view.noteAll?500:12).map(n=>{ const url=/^https:\/\/drive\.google\.com\//.test(String(n.url))?String(n.url):'';
+    return `<div class="note-item"><div class="note-ic" aria-hidden="true">${n.fileName?fileIcon(n.fileName):'📝'}</div><div class="note-body">
+      <div class="note-t">${esc(n.title)}</div>
+      <div class="muted small">${+n.ch?`<span class="tag s">Ch ${+n.ch}</span> `:''}by ${esc(n.name)} · ${new Date(+n.at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}${n.fileSize?' · '+fmtSize(+n.fileSize):''}</div>
+      ${n.text?`<div class="note-txt">${esc(n.text)}</div>`:''}
+      <div class="note-acts">${url?`<a class="btn sm" href="${esc(url)}" target="_blank" rel="noopener">Open ${esc(String(n.fileName).split('.').pop().toUpperCase())}</a>`:''}${String(n.by)===UID?`<button class="linkbtn" data-ndel="${esc(n.noteId)}">Delete</button>`:''}</div></div></div>`; }).join('');
+  box.innerHTML=filt+(items||'<div class="empty">No notes yet. Be the first to share one.</div>')+(list.length>12?`<div style="margin-top:10px"><button class="linkbtn" id="nMore">${view.noteAll?'Show fewer':'Show all '+list.length}</button></div>`:'');
+  document.getElementById('nFiltCh').onchange=e=>{ view.noteCh=+e.target.value; paintNotes(); };
+  const qi=document.getElementById('nFiltQ'); qi.oninput=e=>{ view.noteQ=e.target.value; clearTimeout(paintNotes.t); paintNotes.t=setTimeout(()=>{ paintNotes(); const x=document.getElementById('nFiltQ'); x.focus(); x.setSelectionRange(x.value.length,x.value.length); },250); };
+  const mb=document.getElementById('nMore'); if(mb) mb.onclick=()=>{ view.noteAll=!view.noteAll; paintNotes(); };
+  box.querySelectorAll('[data-ndel]').forEach(b=> b.onclick=async()=>{ if(!(await confirmBox('Delete this note?','It will be removed for everyone.','Delete'))) return; b.disabled=true; try{ await gasPost({action:'deleteNote',id:UID,noteId:b.dataset.ndel}); await gasRefresh(); }catch(e){ b.disabled=false; alert('Could not delete: '+e.message); } });
+}
 function DATA_OK(k){ const [s,n]=String(k).split('-').map(Number); return s>=1&&s<=NSETS&&n>=1&&n<=100; }
 async function resolveNames(ids){ if(!UNS||!UNS.profiles||!ids.length) return; try{ const ps=await UNS.profiles(ids); ids.forEach(id=>{ NAMES[id]=(ps&&ps[id]&&ps[id].name)||''; }); }catch(e){} }
 function paintBoard(){
