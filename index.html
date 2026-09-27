@@ -224,6 +224,26 @@ body.noshared .two.shared,body.noshared .shared-only{display:none}
 .cd-form select,.cd-form input{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
 .two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:0 0 28px}
 @media (max-width:860px){.two{grid-template-columns:1fr}}
+.pnav{position:sticky;top:38px;z-index:20;display:flex;gap:4px;background:var(--bg);padding:8px 0;margin:0 0 18px;border-bottom:1px solid var(--line)}
+.pnav button{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;background:transparent;border-radius:10px;padding:10px 8px;font:inherit;font-weight:600;color:var(--muted);cursor:pointer;position:relative}
+.pnav button:hover{background:var(--surface);color:var(--ink)}
+.pnav button.on{background:var(--surface);color:var(--navy);border-color:var(--line);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.pn-ic{font-size:18px}.pn-badge{background:var(--bad);color:#fff;border-radius:99px;font-size:11px;padding:1px 6px;min-width:18px}
+.tabpane{display:none}.tabpane.on{display:block}
+.pane-intro{margin:0 0 14px}.pane-intro h2{margin:0}.pane-intro p{margin:4px 0 0}
+.cont{margin:0 0 18px}.cont h2{margin:0 0 10px;font-size:18px}.cont-acts{display:flex;flex-wrap:wrap;gap:8px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}
+.tile{display:flex;flex-direction:column;gap:4px;align-items:flex-start;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;font:inherit;color:var(--ink);cursor:pointer}
+.tile:hover{border-color:var(--navy)}.tile-ic{font-size:26px}.tile b{font-size:17px}
+.noshared-only{display:none}body.noshared .noshared-only{display:block}
+@media (max-width:760px){
+ .pnav{position:fixed;top:auto;bottom:0;left:0;right:0;margin:0;padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);border-bottom:0;background:var(--surface);box-shadow:0 -2px 10px rgba(0,0,0,.08);z-index:60}
+ .pnav button{flex-direction:column;gap:2px;padding:6px 2px;font-size:11px}.pnav button.on{box-shadow:none;border-color:transparent;background:var(--bg)}
+ .pn-badge{position:absolute;top:2px;right:18%}
+ body{padding-bottom:72px}
+ .tiles{grid-template-columns:1fr 1fr}
+}
+body.in-exam .pnav{display:none}
 .soc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .soc-card{border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0}
 .soc-card h3{margin:0 0 4px;font-size:17px}
@@ -796,6 +816,34 @@ function renderTheory(){
   if(view.hl){ const el=document.getElementById(view.hl); if(el){ el.classList.add('flash'); setTimeout(()=>el.scrollIntoView({block:'center'}),30); } } else window.scrollTo(0,0);
 }
 
+
+/* ---------- page navigation ---------- */
+const PANES=[['home','🏠','Home'],['practice','📝','Practice'],['study','📖','Study'],['progress','📈','Progress'],['community','👥','Community']];
+let PANE=(()=>{ const h=(location.hash||'').slice(1); return PANES.some(p=>p[0]===h)?h:'home'; })();
+function navHtml(){ const due=dueBank().length;
+  return `<nav class="pnav" aria-label="Sections">${PANES.map(([id,ic,t])=>`<button data-pane-go="${id}" class="${id===PANE?'on':''}" ${id===PANE?'aria-current="page"':''}><span class="pn-ic" aria-hidden="true">${ic}</span><span class="pn-t">${t}</span>${id==='practice'&&due?`<span class="pn-badge">${due}</span>`:''}</button>`).join('')}</nav>`; }
+function showPane(id,push){ if(!PANES.some(p=>p[0]===id)) id='home'; PANE=id;
+  document.querySelectorAll('.tabpane').forEach(el=>el.classList.toggle('on',el.dataset.pane===id));
+  document.querySelectorAll('[data-pane-go]').forEach(b=>{ const on=b.dataset.paneGo===id; b.classList.toggle('on',on); if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
+  if(push){ try{ history.pushState({pane:id},'','#'+id); }catch(e){ location.hash=id; } }
+  const nav=document.querySelector('.pnav'); if(nav && push){ const top=nav.getBoundingClientRect().top+window.scrollY-50; if(window.scrollY>top) window.scrollTo(0,Math.max(0,top)); } }
+function bindNav(){ document.querySelectorAll('[data-pane-go]').forEach(b=> b.onclick=()=>showPane(b.dataset.paneGo,true)); showPane(PANE,false); }
+window.addEventListener('popstate',()=>{ const h=(location.hash||'').slice(1)||'home'; if(view.name==='home') showPane(h,false); else { PANE=PANES.some(p=>p[0]===h)?h:'home'; } });
+function continueHtml(){ const items=[];
+  for(let i=1;i<=NSETS;i++){ const ses=S.sessions['s'+i]; if(ses) items.push(`<button class="btn primary" data-go="${i}">Resume Set ${i} <span class="small">(${Object.keys(ses.answers).length}/100)</span></button>`); }
+  if(S.sessions.ch) items.push(`<button class="btn primary" id="cResCh">Resume chapter quiz</button>`);
+  if(S.sessions.rev) items.push(`<button class="btn primary" id="cResRev">Resume revision</button>`);
+  if(S.sessions.chal) items.push(`<button class="btn primary" data-ctake="${S.sessions.chal.code}">Resume challenge ${S.sessions.chal.code}</button>`);
+  const due=dueBank().length; if(due) items.push(`<button class="btn" id="cDue">Revise ${due} due question${due>1?'s':''}</button>`);
+  let next=0; for(let i=1;i<=NSETS;i++){ const r=S.results['s'+i]; if(!S.sessions['s'+i] && !(r&&r.attempts.length)){ next=i; break; } }
+  if(next) items.push(`<button class="btn" data-go="${next}">Start Set ${next}</button>`);
+  const unread=Object.keys(S.read||{}).length<10; if(unread) items.push(`<button class="btn" id="cTheory">Continue theory reading</button>`);
+  if(!items.length) return '';
+  return `<div class="panel cont"><h2>Continue where you left off</h2><div class="cont-acts">${items.slice(0,6).join('')}</div></div>`; }
+function tilesHtml(){ const dc=doneCount(), due=dueBank().length, rd=Object.keys(S.read||{}).length;
+  const t=[['practice','📝','Practice',`${dc}/${NSETS} sets done${due?' · '+due+' due to revise':''}`],['study','📖','Study',`Theory ${rd}/10 read · ${CARDS.length} flashcards`],['progress','📈','Progress','Scores, weak chapters and pace'],['community','👥','Community','Friends, discussion, notes, leaderboard']];
+  return `<div class="tiles">${t.map(([id,ic,h,d])=>`<button class="tile" data-pane-go="${id}"><span class="tile-ic" aria-hidden="true">${ic}</span><b>${h}</b><span class="muted small">${d}</span></button>`).join('')}</div>`; }
+
 function renderHome(){
   stopTick();
   const dc = doneCount(); const latest = []; let best = null;
@@ -810,10 +858,10 @@ function renderHome(){
     <button class="btn sm ghost" id="resetAll">Reset progress</button>
     <span class="save-state" id="saveState">${dref?'Saved to your account':'Saved on this device'}</span>
   </div></div>
+  ${navHtml()}
+  <div class="tabpane" data-pane="home">
   ${examHeroHtml()}
-  <a class="libcard" href="https://soiesnepal.org.np/library" target="_blank" rel="noopener"><span class="lib-ic" aria-hidden="true">📚</span><span><b>Industrial Engineering Library</b><span class="muted small"> — SOIES Nepal: books, notes and study material for your preparation</span></span><span class="lib-go">Open library ↗</span></a>
-  <div class="study-row"><button class="thcard" id="thOpen"><span class="lib-ic" aria-hidden="true">📖</span><span><b>Theory reading</b><span class="muted small"> — key concepts and formulas, all 10 chapters</span></span><span class="lib-go">${Object.keys(S.read||{}).length}/10 read →</span></button>
-  <button class="thcard" id="fcOpen"><span class="lib-ic" aria-hidden="true">🗂️</span><span><b>Flashcards</b><span class="muted small"> — ${CARDS.length} quick-recall cards from the notes</span></span><span class="lib-go">${Object.keys(S.fc||{}).length} known →</span></button></div>
+  ${continueHtml()}
   <div class="notice" role="note"><b>Please note:</b> These questions were compiled using AI and may contain errors. Read the full NEC syllabus and standard references before your exam.</div>
   <div class="stats">
     <div class="stat"><b>${dc}/${NSETS}</b><span>Sets completed</span></div>
@@ -821,8 +869,21 @@ function renderHome(){
     <div class="stat"><b>${best?best.v:'–'}</b><span>${best?'Best score (Set '+best.i+')':'Best score'}</span></div>
     <div class="stat"><b>${bank.length}</b><span>Questions to revise</span></div>
   </div>
+  ${tilesHtml()}
+  </div>
+  <div class="tabpane" data-pane="study">
+  <div class="pane-intro"><h2>Study</h2><p class="muted">Read the key concepts chapter by chapter, drill with flashcards, and browse the SOIES library.</p></div>
+  <a class="libcard" href="https://soiesnepal.org.np/library" target="_blank" rel="noopener"><span class="lib-ic" aria-hidden="true">📚</span><span><b>Industrial Engineering Library</b><span class="muted small"> — SOIES Nepal: books, notes and study material for your preparation</span></span><span class="lib-go">Open library ↗</span></a>
+  <div class="study-row"><button class="thcard" id="thOpen"><span class="lib-ic" aria-hidden="true">📖</span><span><b>Theory reading</b><span class="muted small"> — key concepts and formulas, all 10 chapters</span></span><span class="lib-go">${Object.keys(S.read||{}).length}/10 read →</span></button>
+  <button class="thcard" id="fcOpen"><span class="lib-ic" aria-hidden="true">🗂️</span><span><b>Flashcards</b><span class="muted small"> — ${CARDS.length} quick-recall cards from the notes</span></span><span class="lib-go">${Object.keys(S.fc||{}).length} known →</span></button></div>
+  </div>
+  <div class="tabpane" data-pane="progress">
+  <div class="pane-intro"><h2>Your progress</h2><p class="muted">Scores over time, chapter strengths and weaknesses, and your pace per question.</p></div>
   ${perfHtml()}
   ${timeHtml()}
+  </div>
+  <div class="tabpane" data-pane="practice">
+  <div class="pane-intro"><h2>Practice</h2><p class="muted">Full 100-question sets, quick chapter quizzes, and revision of your mistakes.</p></div>
   ${chapterPracticeHtml()}
   <div class="section-head"><h2>Practice sets</h2>
     <div class="legend"><span><i style="background:var(--ok)"></i>Correct</span><span><i style="background:var(--bad)"></i>Wrong</span><span><i style="background:var(--navy)"></i>Answered, in progress</span><span><i style="background:var(--empty)"></i>Not answered</span></div></div>
@@ -860,6 +921,8 @@ function renderHome(){
     if (bank.length>12) h += `<div style="margin-top:12px"><button class="linkbtn" id="bankToggle">${showAll?'Show fewer':'Show all '+bank.length}</button></div>`;
   }
   h += `</div>`;
+  h += `</div><div class="tabpane" data-pane="community"><div class="pane-intro"><h2>Community</h2><p class="muted">Play with friends, discuss questions, share notes and see the batch leaderboard.</p></div>
+    <div class="empty noshared-only">Leaderboard, discussion, friend challenges and shared notes appear here once the shared server is connected.</div>`;
   h += socialPanelHtml();
   h += `<div class="panel shared-only notesp"><div class="section-head"><h2>Shared notes and files</h2><button class="btn sm primary" id="noteNew">+ Upload a note</button></div>
     <p class="muted small" style="margin:-6px 0 12px">Notes, formula sheets and past questions shared by batch members. Anyone with this page can see and download them.</p>
@@ -867,8 +930,9 @@ function renderHome(){
   h += `<div class="two shared"><div class="panel"><div class="section-head"><h2>Batch leaderboard</h2>
       <label class="small"><input type="checkbox" id="boardOpt" ${S.settings.board!==false?'checked':''}> Show me</label></div><div id="boardBox"></div></div>
     <div class="panel"><div class="section-head"><h2>Reported questions</h2></div><div id="repBox"></div></div></div>`;
-  h += `</div>`;
+  h += `</div></div>`;
   app.innerHTML = h;
+  bindNav();
   paintBoard(); paintReps(); paintNotes(); paintSocial(); bindChapterPractice(); bindExamHero(); tickClock();
   document.getElementById('noteNew').onclick=toggleNoteForm;
   document.getElementById('boardOpt').onchange=e=>{ S.settings.board=e.target.checked; save(); publishBoard(true); paintBoard(); };
@@ -882,6 +946,12 @@ function renderHome(){
   const bt=document.getElementById('bankToggle'); if(bt) bt.onclick=()=>{ view.bankAll=!view.bankAll; render(); };
   const rst=document.getElementById('revStart'); if(rst) rst.onclick=()=>{ const v=document.getElementById('revN').value, n=v==='due'?0:+v; const keys=(v==='due'?dueBank():activeBank()).map(x=>x[0]); S.sessions.rev=newSession(n?keys.slice(0,n):keys); save(); view={name:'exam', sid:'rev'}; render(); };
   const rrs=document.getElementById('revResume'); if(rrs) rrs.onclick=()=>{ view={name:'exam', sid:'rev'}; render(); };
+  const g=id=>document.getElementById(id);
+  if(g('cResCh')) g('cResCh').onclick=()=>{ view={name:'exam', sid:'ch'}; render(); window.scrollTo(0,0); };
+  if(g('cResRev')) g('cResRev').onclick=()=>{ view={name:'exam', sid:'rev'}; render(); window.scrollTo(0,0); };
+  if(g('cDue')) g('cDue').onclick=()=>{ showPane('practice',true); setTimeout(()=>{ const r=document.querySelector('.tabpane.on .rev'); if(r) r.scrollIntoView({behavior:'smooth',block:'start'}); },60); };
+  if(g('cTheory')) g('cTheory').onclick=()=>{ const n=[...Array(10).keys()].map(i=>i+1).find(c=>!(S.read||{})[c])||1; view={name:'theory', ch:n}; render(); window.scrollTo(0,0); };
+  document.querySelectorAll('.cont [data-ctake]').forEach(b=> b.onclick=()=>startChal(b.dataset.ctake));
 }
 
 /* ---------- Nepali date / exam countdown ---------- */
