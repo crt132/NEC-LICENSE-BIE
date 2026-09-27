@@ -224,6 +224,40 @@ body.noshared .two.shared,body.noshared .shared-only{display:none}
 .cd-form select,.cd-form input{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
 .two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:0 0 28px}
 @media (max-width:860px){.two{grid-template-columns:1fr}}
+.soc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.soc-card{border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0}
+.soc-card h3{margin:0 0 4px;font-size:17px}
+.soc-card .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.code-in{width:92px;text-transform:uppercase;letter-spacing:2px;font-family:ui-monospace,monospace;padding:7px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:15px}
+.soc-sub{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:12px 0 4px}
+.soc-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.soc-acts{display:flex;gap:6px;flex-shrink:0}
+.mono{font-family:ui-monospace,monospace;letter-spacing:1px}
+.soc-disc{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:none;padding:8px 0;color:var(--ink);font:inherit;cursor:pointer}
+.soc-disc:hover span:last-child{text-decoration:underline}
+.code-big{font-family:ui-monospace,monospace;font-size:44px;font-weight:800;letter-spacing:8px;color:var(--navy);margin:6px 0 10px}
+dialog.sdlg{max-width:640px;width:calc(100% - 24px)}
+dialog.sdlg .fld{display:flex;flex-direction:column;gap:4px;margin:10px 0;font-size:14px}
+dialog.sdlg select,dialog.sdlg input,dialog.sdlg textarea{padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+dialog.sdlg .row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px}
+.disc-opts .opt{padding:8px 10px;font-size:14px}
+.disc-list{max-height:340px;overflow:auto;margin:12px 0;border-top:1px solid var(--line)}
+.disc-item{padding:10px 0;border-bottom:1px solid var(--line)}.disc-item.me .disc-h b{color:var(--navy)}
+.disc-t{white-space:pre-wrap;margin-top:3px;line-height:1.5}
+.disc-new textarea{width:100%;box-sizing:border-box;resize:vertical}
+.chal-board .section-head{flex-wrap:wrap;gap:6px}
+.bt-lobby{text-align:center}.bt-players{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.bt-chip{border:1px solid var(--line);border-radius:99px;padding:6px 12px;background:var(--bg)}.bt-chip.me{border-color:var(--navy);font-weight:700}
+.bt-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.bt-left{font-weight:800;font-size:20px;color:var(--navy)}
+.bt-track{height:10px;background:var(--empty);border-radius:6px;overflow:hidden;margin-bottom:10px}
+.bt-bar{height:100%;background:var(--ok);width:100%;transition:width .25s linear}.bt-bar.low{background:var(--bad)}
+.bt-cnt{margin-left:auto;font-size:13px;color:var(--muted);white-space:nowrap}
+.bt-board{margin-top:10px}.bt-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px}
+.bt-row:nth-child(odd){background:var(--bg)}.bt-row.me{outline:2px solid var(--navy)}
+.bt-rank{width:28px;text-align:center}.bt-name{flex:1}.bt-plus{color:var(--ok);font-weight:700;font-size:13px}
+@media (max-width:900px){.soc-grid{grid-template-columns:1fr}}
+body.in-exam #socialPanel{display:none}
 .thcard{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--navy);border-radius:12px;padding:12px 16px;margin:0 0 18px;color:var(--ink);width:100%;text-align:left;font:inherit;cursor:pointer}
 .thcard:hover,.thcard:focus-visible{border-color:var(--navy);box-shadow:0 2px 10px rgba(0,0,0,.08)}
 .thcard>span:nth-child(2){flex:1;min-width:0}
@@ -313,7 +347,7 @@ table.lb tr.me td{background:var(--ok-soft)}
    Paste your Google Apps Script web app URL (ends with /exec) below.
    Leave empty to disable. On claude.ai the Claude account store is used.
    ===================================================================== */
-const BACKEND_URL = "";
+const BACKEND_URL = "https://script.google.com/macros/s/AKfycbzzFbX0_WvgGP9XnERkn2myb7gkeC5tBOFkfC4mpGA7iTo6t2q28kTWT0BqnT7oCVjegg/exec";
 const GOATCOUNTER = "bie078"; // visitor counter for the GitHub copy (bie078.goatcounter.com)
 (function(){
 const DATA = JSON.parse(document.getElementById('qdata').textContent);
@@ -437,7 +471,233 @@ function getLast(sid){ const r=S.results[sid]; if(!r||!r.last) return null; cons
   const i=+sid.slice(1), keys=setKeys(i), answers={}, flags={}, order={};
   keys.forEach((k,j)=>{ const c=L0.ans[j]; if(c!=='-') answers[k]=+c; if(L0.flg[j]==='1') flags[k]=1; order[k]=L0.ord.substr(j*4,4); });
   return Object.assign({}, L0, {keys, answers, flags, order}); }
-function label(sid){ return sid==='rev' ? 'Revision exam' : sid==='ch' ? 'Chapter practice' : 'Set '+sid.slice(1); }
+function label(sid){ return sid==='rev' ? 'Revision exam' : sid==='ch' ? 'Chapter practice' : sid==='chal' ? 'Friend challenge' : 'Set '+sid.slice(1); }
+
+/* ---------- social: discussion, friend challenge, quiz battle ---------- */
+let COMM={}, CHAL={}, CHRES={}, COMM_RECENT=[], socialOn=false;
+const CODE_ABC='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+function newCode(){ let s=''; for(let i=0;i<6;i++) s+=CODE_ABC[Math.floor(Math.random()*CODE_ABC.length)]; return s; }
+function nameOf(id,fallback){ return (NAMES[id]||fallback||'').trim() || (id===UID?'You':'Batch member'); }
+function ago(t){ const s=Math.max(0,(Date.now()-t)/1000); if(s<60) return 'just now'; if(s<3600) return Math.floor(s/60)+' min ago'; if(s<86400) return Math.floor(s/3600)+' h ago'; return Math.floor(s/86400)+' d ago'; }
+function seedPerm(str){ let h=2166136261; for(const c of str){ h^=c.charCodeAt(0); h=Math.imul(h,16777619); } const a=[0,1,2,3]; for(let i=3;i>0;i--){ h=Math.imul(h^(h>>>13),1597334677)>>>0; const j=h%(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function pickKeys(src,n){ const pool=[];
+  if(src.startsWith('s')){ const s=+src.slice(1); for(let q=1;q<=100;q++) pool.push(s+'-'+q); }
+  else { const c=src==='all'?0:+src.slice(1); for(let s=1;s<=NSETS;s++) for(let q=1;q<=100;q++){ if(!c || Math.ceil(q/10)===c) pool.push(s+'-'+q); } }
+  for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+  const keys=pool.slice(0,n); if(!src.startsWith('s')) keys.sort((a,b)=>chOf(a)-chOf(b)); return keys; }
+function srcTitle(src){ return src==='all'?'Mixed (all chapters)':src.startsWith('s')?'Set '+src.slice(1):CH[+src.slice(1)-1]; }
+function srcOptions(withSets){ return `<option value="all">Mixed: all chapters</option>${CH.map((c,i)=>`<option value="c${i+1}">${i+1}. ${esc(c)}</option>`).join('')}${withSets?Array.from({length:NSETS},(_,i)=>`<option value="s${i+1}">Set ${i+1}</option>`).join(''):''}`; }
+function ensureName(){ if(MODE!=='gas') return true; let n=(S.settings.name||'').trim(); if(!n){ n=(prompt('Your name (shown to batch members):')||'').trim().slice(0,40); if(!n) return false; S.settings.name=n; save(); } return true; }
+function sdlg(html){ let d=document.getElementById('sdlg'); if(!d){ d=document.createElement('dialog'); d.id='sdlg'; d.className='sdlg'; document.body.appendChild(d); d.addEventListener('close',()=>{ d.innerHTML=''; SD_K=null; }); } d.innerHTML=html; if(!d.open) d.showModal(); return d; }
+function closeSdlg(){ const d=document.getElementById('sdlg'); if(d&&d.open) d.close(); }
+
+/* data intake */
+function ingestComments(list){ const m={}; list.forEach(c=>{ if(!c||!c.k||!c.t||!DATA_OK(c.k,c.at||0)) return; (m[c.k]||(m[c.k]=[])).push(c); });
+  Object.values(m).forEach(a=>a.sort((x,y)=>x.at-y.at)); COMM=m; COMM_RECENT=list.filter(c=>c&&c.k&&c.t&&m[c.k]).sort((a,b)=>b.at-a.at).slice(0,8); }
+function ingestChal(list){ const m={}; list.forEach(c=>{ if(c&&c.code&&Array.isArray(c.keys)&&c.keys.length&&c.keys.every(k=>DATA_OK(k))) m[c.code]=c; }); CHAL=m; }
+function ingestRes(list){ const m={}; list.forEach(r=>{ if(r&&r.code) (m[r.code]||(m[r.code]=[])).push(r); }); CHRES=m; }
+function socialChanged(){ paintSocial(); if(SD_K) paintDiscuss(); if(view.name==='result'&&view.sid==='chal') paintChalBoard(); }
+async function startSocialClaude(){ if(socialOn||!db) return; socialOn=true;
+  const flat=(snap,f)=>{ const out=[]; snap.docs.forEach(d=>{ ((d.data()||{}).items||[]).forEach(it=>out.push(Object.assign({by:d.id},it))); }); return out; };
+  try{ db.collection('comments').onSnapshot(async snap=>{ const l=flat(snap); await resolveNames([...new Set(l.map(c=>c.by))]); ingestComments(l); socialChanged(); },()=>{}); }catch(e){}
+  try{ db.collection('challenges').onSnapshot(async snap=>{ const l=flat(snap); await resolveNames([...new Set(l.map(c=>c.by))]); ingestChal(l); socialChanged(); checkUrlCode(); },()=>{}); }catch(e){}
+  try{ db.collection('chres').onSnapshot(async snap=>{ const l=flat(snap); await resolveNames([...new Set(l.map(c=>c.by))]); ingestRes(l); socialChanged(); },()=>{}); }catch(e){}
+}
+function ingestGasSocial(d){ if(Array.isArray(d.comments)) ingestComments(d.comments.map(c=>({id:String(c.cid),by:String(c.id),name:c.name,k:String(c.k),t:String(c.t),at:+c.at})));
+  if(Array.isArray(d.challenges)) ingestChal(d.challenges.map(c=>{ let keys=[]; try{ keys=JSON.parse(c.keys); }catch(e){} return {code:String(c.code),by:String(c.id),name:c.name,title:String(c.title),keys,min:+c.min,at:+c.at}; }));
+  if(Array.isArray(d.chres)) ingestRes(d.chres.map(r=>({code:String(r.code),by:String(r.id),name:r.name,c:+r.c,t:+r.t,s:+r.s,at:+r.at})));
+  socialOn=true; socialChanged(); checkUrlCode(); }
+async function pushMine(col,item,max,filter){ const ref=db.doc(col+'/'+UID); let items=[]; try{ const g=await ref.get(); if(g.exists) items=((g.data()||{}).items)||[]; }catch(e){}
+  if(filter) items=items.filter(filter); if(item) items.push(item); items=items.slice(-max); await ref.set({items}); }
+
+/* ---------- discussion ---------- */
+let SD_K=null;
+function discCount(k){ return (COMM[k]||[]).length; }
+function openDiscuss(k,showAns){ SD_K={k,showAns:!!showAns}; sdlg(`<div id="discWrap"></div>`); paintDiscuss(); }
+function paintDiscuss(){ const w=document.getElementById('discWrap'); if(!w||!SD_K) return; const k=SD_K.k, q=Q(k), [s,n]=k.split('-'), list=COMM[k]||[];
+  const typed=(document.getElementById('discT')||{}).value||'';
+  w.innerHTML=`<div class="section-head" style="margin-bottom:6px"><h3 style="margin:0">Discussion: Set ${s}, Q${n}</h3><button class="btn sm" id="discX">Close</button></div>
+   <p class="qtext" style="font-size:16px">${esc(q.q)}</p>
+   <div class="disc-opts">${q.o.map((o,i)=>`<div class="opt ${SD_K.showAns&&i===q.a?'right':''}"><span class="l">${L[i]}</span><span>${esc(o)}</span></div>`).join('')}</div>
+   ${SD_K.showAns?'':`<button class="linkbtn" id="discAns">Show the answer key</button>`}
+   <div class="disc-list">${list.length?list.map(c=>`<div class="disc-item ${c.by===UID?'me':''}"><div class="disc-h"><b>${esc(nameOf(c.by,c.name))}</b> <span class="muted small">${ago(c.at)}</span>${c.by===UID?` <button class="linkbtn" data-cdel="${esc(c.id)}">Delete</button>`:''}</div><div class="disc-t">${esc(c.t)}</div></div>`).join(''):'<div class="empty">No comments yet. Ask a doubt or explain the answer for your batch.</div>'}</div>
+   ${canWrite?`<div class="disc-new"><textarea id="discT" maxlength="500" rows="3" placeholder="Write a comment (max 500 characters)"></textarea><div class="row" style="justify-content:space-between;align-items:center"><span class="muted small" id="discMsg">Visible to everyone who can open this page.</span><button class="btn primary sm" id="discPost">Post</button></div></div>`:'<p class="muted small">Your access is view-only, so you cannot post comments.</p>'}`;
+  const ta=document.getElementById('discT'); if(ta) ta.value=typed;
+  document.getElementById('discX').onclick=closeSdlg;
+  const sa=document.getElementById('discAns'); if(sa) sa.onclick=()=>{ SD_K.showAns=true; paintDiscuss(); };
+  const p=document.getElementById('discPost'); if(p) p.onclick=async()=>{ const t=ta.value.trim().slice(0,500); if(!t) return; if(!ensureName()) return; p.disabled=true; const msg=document.getElementById('discMsg'); msg.textContent='Posting…';
+    try{ if(MODE==='gas'){ await gasPost({action:'comment',id:UID,name:S.settings.name,k,t}); ta.value=''; await gasRefresh(); }
+      else { await pushMine('comments',{id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),k,t,at:Date.now()},200); ta.value=''; }
+      msg.textContent='Posted.'; }catch(e){ msg.textContent='Could not post. Try again.'; } p.disabled=false; };
+  w.querySelectorAll('[data-cdel]').forEach(b=> b.onclick=async()=>{ b.disabled=true; const id=b.dataset.cdel;
+    try{ if(MODE==='gas'){ await gasPost({action:'delComment',id:UID,cid:id}); await gasRefresh(); } else await pushMine('comments',null,200,it=>it.id!==id); }catch(e){ b.disabled=false; } });
+}
+
+/* ---------- friend challenge ---------- */
+function openChalCreate(){ sdlg(`<h3>Create a friend challenge</h3><p class="muted small">Everyone who enters the code gets exactly the same questions. Scores are ranked together.</p>
+  <label class="fld">Questions from <select id="ccSrc">${srcOptions(true)}</select></label>
+  <label class="fld">Number of questions <select id="ccN">${[10,20,30,50,100].map(n=>`<option ${n===20?'selected':''}>${n}</option>`).join('')}</select></label>
+  <label class="fld">Time limit <select id="ccM"><option value="1">Exam pace (72 s per question)</option><option value="0">No time limit</option></select></label>
+  <p class="muted small" id="ccMsg"></p><div class="row"><button class="btn" id="ccNo">Cancel</button><button class="btn primary" id="ccGo">Create</button></div>`);
+  const src=document.getElementById('ccSrc'), nn=document.getElementById('ccN');
+  src.onchange=()=>{ if(src.value.startsWith('s')) nn.value='100'; };
+  document.getElementById('ccNo').onclick=closeSdlg;
+  document.getElementById('ccGo').onclick=async()=>{ if(!ensureName()) return; const b=document.getElementById('ccGo'); b.disabled=true; const msg=document.getElementById('ccMsg'); msg.textContent='Creating…';
+    const n=+nn.value, keys=pickKeys(src.value,n), code=newCode(), min=document.getElementById('ccM').value==='1'?Math.max(5,Math.round(n*1.2)):0, title=srcTitle(src.value)+' · '+n+' Q';
+    try{ if(MODE==='gas'){ await gasPost({action:'challenge',id:UID,name:S.settings.name,code,title,keys,min}); await gasRefresh(); }
+      else { await pushMine('challenges',{code,title,keys,min,at:Date.now()},30); CHAL[code]={code,by:UID,title,keys,min,at:Date.now()}; }
+      openChalShare(code); }catch(e){ b.disabled=false; msg.textContent='Could not create the challenge. Try again.'; } };
+}
+function chalLink(code){ return location.href.split('#')[0].split('?')[0]+'?c='+code; }
+function openChalShare(code){ const c=CHAL[code]; sdlg(`<h3>Challenge created</h3><p class="muted small">${esc(c?c.title:'')}</p>
+  <div class="code-big">${code}</div><p class="small">Send this code to your friends. They open this page, tap <b>Join with code</b> and enter it.${MODE==='gas'?' Or share the link:':''}</p>
+  ${MODE==='gas'?`<div class="row"><input id="ccLink" readonly value="${esc(chalLink(code))}" style="flex:1"><button class="btn sm" id="ccCopy">Copy link</button></div>`:''}
+  <div class="row"><button class="btn" id="ccCopyCode">Copy code</button><button class="btn" id="ccLater">Close</button><button class="btn primary" id="ccTake">Take it now</button></div>`);
+  const cp=t=>{ try{ navigator.clipboard.writeText(t); }catch(e){} };
+  const l=document.getElementById('ccCopy'); if(l) l.onclick=()=>{ cp(chalLink(code)); l.textContent='Copied'; };
+  document.getElementById('ccCopyCode').onclick=e=>{ cp(code); e.target.textContent='Copied'; };
+  document.getElementById('ccLater').onclick=()=>{ closeSdlg(); render(); };
+  document.getElementById('ccTake').onclick=()=>{ closeSdlg(); startChal(code); };
+}
+async function joinChal(code){ code=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,''); if(code.length!==6) return alert('Enter the 6-character code.');
+  if(!CHAL[code] && MODE==='gas') await gasRefresh();
+  if(!CHAL[code]) return alert('No challenge found with code '+code+'. Check the code, or wait a few seconds and try again.');
+  startChal(code); }
+async function startChal(code){ const c=CHAL[code]; if(!c) return;
+  if(S.sessions.chal && S.sessions.chal.code!==code && !(await confirmBox('Start this challenge?','Your unfinished challenge will be discarded.','Start'))) return;
+  if(!S.sessions.chal || S.sessions.chal.code!==code){ const ses=newSession(c.keys.slice()); ses.code=code; ses.title=c.title; ses.minutes=+c.min||0; S.sessions.chal=ses; save(); }
+  view={name:'exam', sid:'chal'}; render(); window.scrollTo(0,0); }
+async function postChalResult(code,c,t,s){ try{ if(!sharedOn) return;
+  if(MODE==='gas'){ if(!ensureName()) return; await gasPost({action:'chres',id:UID,name:S.settings.name,code,c,t,s}); await gasRefresh(); }
+  else { await pushMine('chres',{code,c,t,s,at:Date.now()},300); } }catch(e){} }
+function chalRanking(code){ const best={}; (CHRES[code]||[]).forEach(r=>{ const b=best[r.by]; if(!b||r.c>b.c||(r.c===b.c&&r.s<b.s)) best[r.by]=Object.assign({n:(b?b.n:0)+1},r); else b.n++; });
+  return Object.values(best).sort((a,b)=>b.c-a.c||a.s-b.s); }
+function chalBoardHtml(code){ const c=CHAL[code], rows=chalRanking(code);
+  return `<div class="chal-board"><div class="section-head"><h3 style="margin:0">Challenge ${esc(code)} scoreboard</h3><span class="muted small">${esc(c?c.title:'')}${c?' · by '+esc(nameOf(c.by,c.name)):''}</span></div>
+   ${rows.length?`<div class="tablewrap"><table class="lb"><thead><tr><th>#</th><th>Name</th><th>Score</th><th>Time</th><th>Tries</th></tr></thead><tbody>${rows.map((r,i)=>`<tr class="${r.by===UID?'me':''}"><td>${i<3?['🥇','🥈','🥉'][i]:i+1}</td><td>${esc(nameOf(r.by,r.name))}${r.by===UID?' <span class="tag s">you</span>':''}</td><td><b>${r.c}/${r.t}</b></td><td>${fmt(r.s)}</td><td>${r.n}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No one has finished this challenge yet.</div>'}</div>`; }
+function openChalBoard(code){ sdlg(`<div id="cbWrap">${chalBoardHtml(code)}</div><div class="row"><button class="btn" id="cbX">Close</button><button class="btn primary" id="cbTake">Take this challenge</button></div>`);
+  document.getElementById('cbX').onclick=closeSdlg; document.getElementById('cbTake').onclick=()=>{ closeSdlg(); startChal(code); }; }
+function paintChalBoard(){ const el=document.getElementById('chalBoardRes'); const r=S.results.chal; if(el&&r&&r.last&&r.last.code) el.innerHTML=chalBoardHtml(r.last.code); }
+let urlCodeDone=false;
+function checkUrlCode(){ if(urlCodeDone) return; let code=''; try{ code=(new URLSearchParams(location.search).get('c')||'').toUpperCase(); }catch(e){} if(!code){ urlCodeDone=true; return; }
+  if(!CHAL[code]) return; urlCodeDone=true; if(view.name!=='home') return; const c=CHAL[code];
+  confirmBox('Take challenge '+code+'?', c.title+' from '+nameOf(c.by,c.name)+'.', 'Start').then(ok=>{ if(ok) startChal(code); }); }
+
+/* ---------- home panel ---------- */
+function socialPanelHtml(){ return `<div class="panel shared-only" id="socialPanel"><div class="section-head"><h2>Play with friends</h2></div><div id="socialBox"></div></div>`; }
+function paintSocial(){ const box=document.getElementById('socialBox'); if(!box) return;
+  if(!sharedOn){ box.innerHTML='<div class="empty">Friend features need the shared connection.</div>'; return; }
+  const mine=Object.values(CHAL).filter(c=>c.by===UID).sort((a,b)=>b.at-a.at).slice(0,5);
+  const taken=[...new Set((S.results.chal&&S.results.chal.attempts||[]).map(a=>a.code).filter(Boolean))].reverse().filter(c=>CHAL[c]&&CHAL[c].by!==UID).slice(0,5);
+  const recent=Object.values(CHAL).filter(c=>c.by!==UID&&!taken.includes(c.code)).sort((a,b)=>b.at-a.at).slice(0,4);
+  const ses=S.sessions.chal;
+  const chalRow=c=>{ const rk=chalRanking(c.code), me=rk.findIndex(r=>r.by===UID); return `<div class="soc-row"><div><b class="mono">${c.code}</b> <span class="small">${esc(c.title)}</span><div class="muted small">by ${esc(nameOf(c.by,c.name))} · ${rk.length} played${me>=0?' · you are #'+(me+1):''}</div></div><div class="soc-acts"><button class="btn sm" data-cboard="${c.code}">Scores</button>${me<0?`<button class="btn sm primary" data-ctake="${c.code}">Play</button>`:''}</div></div>`; };
+  box.innerHTML=`<div class="soc-grid">
+   <div class="soc-card"><h3>🤝 Friend challenge</h3><p class="muted small">Same questions for everyone, one shared scoreboard.</p>
+     <div class="row"><button class="btn primary sm" id="chNew">Create challenge</button><input id="chCode" class="code-in" maxlength="6" placeholder="CODE"><button class="btn sm" id="chJoin">Join</button></div>
+     ${ses?`<div class="soc-row"><div><b class="mono">${ses.code}</b> <span class="small">${esc(ses.title||'')}</span><div class="muted small">In progress: ${Object.keys(ses.answers).length}/${ses.keys.length} answered</div></div><button class="btn sm primary" data-ctake="${ses.code}">Resume</button></div>`:''}
+     ${mine.length?`<div class="soc-sub">Your challenges</div>${mine.map(chalRow).join('')}`:''}
+     ${taken.length?`<div class="soc-sub">Challenges you played</div>${taken.map(c=>chalRow(CHAL[c])).join('')}`:''}
+     ${recent.length?`<div class="soc-sub">New from your batch</div>${recent.map(chalRow).join('')}`:''}</div>
+   <div class="soc-card"><h3>⚔️ Quiz battle (live)</h3><p class="muted small">Play together in real time: same question on every screen, faster correct answers score more.</p>
+     ${MODE==='claude'?`<div class="row"><button class="btn primary sm" id="btHost">Host a battle</button><input id="btCode" class="code-in" maxlength="6" placeholder="CODE"><button class="btn sm" id="btJoin">Join</button></div>`
+       :`<div class="empty small">Live battles run in the Claude-hosted version of this page. Ask your batch admin for that link.</div>`}</div>
+   <div class="soc-card"><h3>💬 Recent discussions</h3>${COMM_RECENT.length?COMM_RECENT.map(c=>{ const [s,n]=c.k.split('-'); return `<button class="soc-disc" data-disc="${c.k}"><span class="muted small">Set ${s}, Q${n} · ${esc(nameOf(c.by,c.name))} · ${ago(c.at)}</span><span>${esc(c.t.length>110?c.t.slice(0,110)+'…':c.t)}</span></button>`; }).join(''):'<p class="muted small">No discussions yet. Open any question in a result review and tap <b>Discuss</b>.</p>'}</div>
+  </div>`;
+  const g=id=>document.getElementById(id);
+  g('chNew').onclick=openChalCreate;
+  g('chJoin').onclick=()=>joinChal(g('chCode').value);
+  g('chCode').onkeydown=e=>{ if(e.key==='Enter') joinChal(g('chCode').value); };
+  box.querySelectorAll('[data-ctake]').forEach(b=> b.onclick=()=>startChal(b.dataset.ctake));
+  box.querySelectorAll('[data-cboard]').forEach(b=> b.onclick=()=>openChalBoard(b.dataset.cboard));
+  box.querySelectorAll('[data-disc]').forEach(b=> b.onclick=()=>openDiscuss(b.dataset.disc,false));
+  if(g('btHost')){ g('btHost').onclick=openBattleHost; g('btJoin').onclick=()=>joinBattle(g('btCode').value); g('btCode').onkeydown=e=>{ if(e.key==='Enter') joinBattle(g('btCode').value); }; }
+}
+
+/* ---------- quiz battle (Claude db, real time) ---------- */
+let BT=null;
+const BT_REVEAL=4500;
+function btScore(ans,secs){ return ans && ans[2] ? Math.round(1000-500*Math.min(1,ans[1]/(secs*1000))) : 0; }
+function btPlayers(){ if(!BT||!BT.doc) return []; const r=BT.doc.round||0; return Object.values(BT.players).filter(p=>p.code===BT.code && (p.r||0)===r); }
+function btTotals(uptoQi,inclusive){ const secs=BT.doc.secs||20; return btPlayers().map(p=>{ let t=0; const a=p.a||{}; for(let i=0;i<=uptoQi-(inclusive?0:1);i++) t+=btScore(a[i],secs); return {id:p.id,t,last:btScore(a[uptoQi],secs)}; }).sort((x,y)=>y.t-x.t); }
+function openBattleHost(){ sdlg(`<h3>Host a quiz battle</h3><p class="muted small">You get a code; friends join, then you start. You play too.</p>
+  <label class="fld">Questions from <select id="bhSrc">${srcOptions(false)}</select></label>
+  <label class="fld">Number of questions <select id="bhN">${[5,10,15,20].map(n=>`<option ${n===10?'selected':''}>${n}</option>`).join('')}</select></label>
+  <label class="fld">Seconds per question <select id="bhS">${[15,20,30,45].map(n=>`<option ${n===20?'selected':''}>${n}</option>`).join('')}</select></label>
+  <p class="muted small" id="bhMsg"></p><div class="row"><button class="btn" id="bhNo">Cancel</button><button class="btn primary" id="bhGo">Create lobby</button></div>`);
+  document.getElementById('bhNo').onclick=closeSdlg;
+  document.getElementById('bhGo').onclick=async()=>{ const b=document.getElementById('bhGo'); b.disabled=true; const src=document.getElementById('bhSrc').value, n=+document.getElementById('bhN').value, secs=+document.getElementById('bhS').value, code=newCode();
+    const doc={code,host:UID,title:srcTitle(src),src,n,secs,keys:pickKeys(src,n),st:'lobby',qi:0,round:1,at:Date.now()};
+    try{ await db.doc('battles/'+UID).set(doc); closeSdlg(); await enterBattle(code,true); }catch(e){ b.disabled=false; document.getElementById('bhMsg').textContent='Could not create the lobby. Your access may be view-only.'; } };
+}
+async function joinBattle(code){ code=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,''); if(code.length!==6) return alert('Enter the 6-character battle code.');
+  try{ const snap=await db.collection('battles').where('code','==',code).get(); const d=snap.docs.map(x=>x.data()).sort((a,b)=>b.at-a.at)[0];
+    if(!d || Date.now()-d.at>6*3600e3) return alert('No live battle found with code '+code+'.');
+    if(d.st==='end') return alert('That battle has already finished.');
+    await enterBattle(code,false); }catch(e){ alert('Could not join the battle. Try again.'); } }
+async function enterBattle(code,isHost){ leaveBattle(true);
+  BT={code,isHost,doc:null,players:{},unsubs:[],phaseKey:'',tStart:0,revStart:0,timer:null,hostTimer:null};
+  try{ await db.doc('bplayers/'+UID).set({code,r:1,a:{},at:Date.now()}); }catch(e){}
+  BT.unsubs.push(db.collection('battles').where('code','==',code).onSnapshot(snap=>{ const d=snap.docs.map(x=>x.data()).sort((a,b)=>b.at-a.at)[0]; if(!BT) return; BT.doc=d||null; btOnChange(); },()=>{}));
+  BT.unsubs.push(db.collection('bplayers').where('code','==',code).onSnapshot(async snap=>{ if(!BT) return; const m={}; snap.docs.forEach(x=>{ m[x.id]=Object.assign({id:x.id},x.data()); }); BT.players=m; await resolveNames(Object.keys(m)); btOnChange(); },()=>{}));
+  if(isHost) BT.hostTimer=setInterval(btHostTick,400);
+  BT.timer=setInterval(btTickUi,250);
+  view={name:'battle'}; render(); window.scrollTo(0,0); }
+function leaveBattle(silent){ if(!BT) return; const b=BT; BT=null; b.unsubs.forEach(u=>{ try{u();}catch(e){} }); clearInterval(b.timer); clearInterval(b.hostTimer);
+  try{ db.doc('bplayers/'+UID).set({code:'',r:0,a:{},at:Date.now()}); }catch(e){}
+  if(b.isHost && b.doc && b.doc.st!=='end') try{ db.doc('battles/'+UID).update({st:'end',at:Date.now()}); }catch(e){}
+  if(!silent){ view={name:'home'}; render(); window.scrollTo(0,0); } }
+function btOnChange(){ if(!BT||view.name!=='battle') return; const d=BT.doc; if(!d){ renderBattle(); return; }
+  const me=BT.players[UID];
+  if(me && (me.r||0)!==(d.round||1) && d.st!=='end'){ try{ db.doc('bplayers/'+UID).set({code:BT.code,r:d.round||1,a:{},at:Date.now()}); }catch(e){} }
+  const key=d.round+':'+d.st+':'+d.qi;
+  if(key!==BT.phaseKey){ BT.phaseKey=key; if(d.st==='q') BT.tStart=Date.now(); if(d.st==='rev') BT.revStart=Date.now(); renderBattle();
+    if(d.st==='end'){ const tot=btTotals(d.keys.length-1,true); if(tot.length>1&&tot[0].id===UID) celebrateBattle(); } }
+  else renderBattleLive(); }
+async function btHostTick(){ if(!BT||!BT.isHost||!BT.doc||BT.busy) return; const d=BT.doc, now=Date.now();
+  if(d.st==='q'){ const ps=btPlayers(), all=ps.length&&ps.every(p=>p.a&&p.a[d.qi]); if(all || now-BT.tStart>d.secs*1000+600){ BT.busy=true; try{ await db.doc('battles/'+UID).update({st:'rev',at:now}); }catch(e){} BT.busy=false; } }
+  else if(d.st==='rev' && now-BT.revStart>BT_REVEAL){ BT.busy=true; try{ await db.doc('battles/'+UID).update(d.qi+1<d.keys.length?{st:'q',qi:d.qi+1,at:now}:{st:'end',at:now}); }catch(e){} BT.busy=false; } }
+function btOrder(d,qi){ return seedPerm(d.code+':'+d.round+':'+qi); }
+function btAnswer(o){ const d=BT&&BT.doc; if(!d||d.st!=='q') return; const me=BT.players[UID]||{}; if(me.a&&me.a[d.qi]) return;
+  const ms=Math.min(d.secs*1000,Date.now()-BT.tStart), ok=o===Q(d.keys[d.qi]).a, a=Object.assign({},me.a||{}); a[d.qi]=[o,ms,ok?1:0];
+  BT.players[UID]=Object.assign({},me,{id:UID,code:BT.code,r:d.round,a}); renderBattle();
+  db.doc('bplayers/'+UID).set({code:BT.code,r:d.round,a,at:Date.now()}).catch(()=>{}); }
+function btTickUi(){ if(!BT||view.name!=='battle'||!BT.doc) return; const d=BT.doc, bar=document.getElementById('btBar'), tx=document.getElementById('btLeft');
+  if(d.st==='q'&&bar){ const left=Math.max(0,d.secs*1000-(Date.now()-BT.tStart)); bar.style.width=(left/(d.secs*1000)*100)+'%'; bar.classList.toggle('low',left<5000); if(tx) tx.textContent=Math.ceil(left/1000)+' s';
+    if(left<=0 && !document.getElementById('btTimeUp')){ const me=BT.players[UID]; if(!(me&&me.a&&me.a[d.qi])){ const box=document.getElementById('btOpts'); if(box){ box.querySelectorAll('button').forEach(b=>b.disabled=true); box.insertAdjacentHTML('afterend','<p id="btTimeUp" class="muted">Time is up. Waiting for the reveal…</p>'); } } } } }
+function renderBattleLive(){ const d=BT.doc; const cnt=document.getElementById('btCount'); if(cnt&&d.st==='q'){ const ps=btPlayers(); cnt.textContent=ps.filter(p=>p.a&&p.a[d.qi]).length+'/'+ps.length+' answered'; return; } if(d.st==='lobby'||d.st==='end'||d.st==='rev') renderBattle(); }
+function btBoard(rows,limit,showLast){ return `<div class="bt-board">${rows.slice(0,limit).map((r,i)=>`<div class="bt-row ${r.id===UID?'me':''}"><span class="bt-rank">${i<3?['🥇','🥈','🥉'][i]:i+1}</span><span class="bt-name">${esc(nameOf(r.id))}${r.id===UID?' (you)':''}</span>${showLast?`<span class="bt-plus">${r.last?'+'+r.last:''}</span>`:''}<b>${r.t}</b></div>`).join('')}</div>`; }
+function renderBattle(){ stopTick(); if(!BT){ view={name:'home'}; return render(); } const d=BT.doc;
+  let h=`<div class="wrap battle"><div class="section-head" style="margin-bottom:14px"><h1>⚔️ Quiz battle</h1><button class="btn" id="btLeave">Leave</button></div>`;
+  if(!d){ h+=`<div class="empty">Connecting to battle ${esc(BT.code)}…</div>`; }
+  else if(d.st==='lobby'){ const ps=btPlayers();
+    h+=`<div class="panel bt-lobby"><p class="muted">${esc(d.title)} · ${d.keys.length} questions · ${d.secs} s each</p><div class="muted small">Battle code</div><div class="code-big">${esc(d.code)}</div>
+      <p class="small">Friends open this page, tap <b>Join</b> under Quiz battle and enter the code.</p>
+      <h3>Players (${ps.length})</h3><div class="bt-players">${ps.map(p=>`<span class="bt-chip ${p.id===UID?'me':''}">${esc(nameOf(p.id))}${p.id===d.host?' 👑':''}</span>`).join('')||'<span class="muted">No one yet</span>'}</div>
+      ${BT.isHost?`<div class="row" style="margin-top:14px"><button class="btn primary" id="btStart" ${ps.length<1?'disabled':''}>Start battle</button></div>`:`<p class="muted" style="margin-top:14px">Waiting for the host to start…</p>`}</div>`; }
+  else if(d.st==='q'||d.st==='rev'){ const k=d.keys[d.qi], q=Q(k), ord=btOrder(d,d.qi), me=BT.players[UID]||{}, mine=me.a&&me.a[d.qi], ps=btPlayers();
+    const counts=[0,0,0,0]; ps.forEach(p=>{ const a=p.a&&p.a[d.qi]; if(a) counts[a[0]]++; });
+    h+=`<div class="panel"><div class="bt-top"><span><b>Question ${d.qi+1}</b> of ${d.keys.length}</span><span class="muted small">Set ${k.split('-')[0]}, Q${k.split('-')[1]}</span>${d.st==='q'?`<span id="btLeft" class="bt-left"></span>`:''}</div>
+      ${d.st==='q'?`<div class="bt-track"><div class="bt-bar" id="btBar"></div></div>`:''}
+      <p class="qtext">${esc(q.q)}</p><div class="opts" id="btOpts">${ord.map((oi,p)=>{ const cls=d.st==='rev'?(oi===q.a?'right':(mine&&mine[0]===oi?'wrong':'')):(mine&&mine[0]===oi?'sel':'');
+        return d.st==='q'?`<button class="opt ${cls}" data-bo="${oi}" ${mine?'disabled':''}><span class="l">${L[p]}</span><span>${esc(q.o[oi])}</span></button>`
+          :`<div class="opt ${cls}"><span class="l">${L[p]}</span><span>${esc(q.o[oi])}</span><span class="bt-cnt">${counts[oi]} 👤</span></div>`; }).join('')}</div>
+      ${d.st==='q'?`<p class="muted small" id="btCount">${ps.filter(p=>p.a&&p.a[d.qi]).length}/${ps.length} answered</p>${mine?'<p class="muted">Answer locked. Waiting for others…</p>':''}`
+        :`<p><b>${mine&&mine[2]?`✅ Correct! +${btScore(mine,d.secs)}`:mine?'❌ Not this time':'⏱️ No answer'}</b></p>${btBoard(btTotals(d.qi,true),5,true)}`}</div>`; }
+  else if(d.st==='end'){ const tot=btTotals(d.keys.length-1,true);
+    h+=`<div class="panel bt-end"><h2>🏆 Final results</h2><p class="muted">${esc(d.title)} · ${d.keys.length} questions</p>${tot.length?btBoard(tot,50,false):'<div class="empty">No scores.</div>'}
+      <div class="row" style="margin-top:14px">${BT.isHost?`<button class="btn primary" id="btAgain">Play again with new questions</button>`:''}<button class="btn" id="btReview">Discuss these questions</button></div><div id="btRevList" class="hidden"></div></div>`; }
+  h+=`</div>`; app.innerHTML=h;
+  document.getElementById('btLeave').onclick=()=>leaveBattle(false);
+  const st=document.getElementById('btStart'); if(st) st.onclick=async()=>{ st.disabled=true; try{ await db.doc('battles/'+UID).update({st:'q',qi:0,at:Date.now()}); }catch(e){ st.disabled=false; } };
+  app.querySelectorAll('[data-bo]').forEach(b=> b.onclick=()=>btAnswer(+b.dataset.bo));
+  const ag=document.getElementById('btAgain'); if(ag) ag.onclick=async()=>{ ag.disabled=true; const d0=BT.doc; try{ await db.doc('battles/'+UID).set(Object.assign({},d0,{keys:pickKeys(d0.src||'all',d0.n||d0.keys.length),st:'lobby',qi:0,round:(d0.round||1)+1,at:Date.now()})); }catch(e){ ag.disabled=false; } };
+  const rv=document.getElementById('btReview'); if(rv) rv.onclick=()=>{ const box=document.getElementById('btRevList'); box.classList.toggle('hidden'); box.innerHTML=d.keys.map((k,i)=>{ const q=Q(k); return `<div class="soc-row"><div><b>Q${i+1}.</b> ${esc(q.q.length>120?q.q.slice(0,120)+'…':q.q)}<div class="small" style="color:var(--ok)">${esc(q.o[q.a])}</div></div><button class="btn sm" data-disc="${k}">💬 ${discCount(k)||''}</button></div>`; }).join(''); box.querySelectorAll('[data-disc]').forEach(b=> b.onclick=()=>openDiscuss(b.dataset.disc,true)); };
+  btTickUi(); }
+function celebrateBattle(){ const old=document.getElementById('party'); if(old) old.remove(); const colors=['#e8453c','#f4b400','#1a73e8','#0f9d58','#ab47bc'];
+  const wrap=document.createElement('div'); wrap.id='party'; let b=''; for(let i=0;i<22;i++){ const sz=38+Math.random()*26; b+=`<span class="balloon" style="left:${Math.random()*96}%;--c:${colors[i%5]};width:${sz}px;height:${sz*1.22}px;animation-duration:${5+Math.random()*4}s;animation-delay:${Math.random()*2}s"></span>`; }
+  wrap.innerHTML=b+`<div class="party-card"><div class="party-emoji">🏆</div><h2>You won the battle!</h2><button class="btn primary" id="partyOk">Continue</button></div>`; document.body.appendChild(wrap);
+  document.getElementById('partyOk').onclick=()=>wrap.remove(); }
 
 /* ---------- dialog ---------- */
 const dlg = document.getElementById('dlg');
@@ -452,6 +712,7 @@ function render(){
   else if (view.name==='exam') renderExam();
   else if (view.name==='theory') renderTheory();
   else if (view.name==='cards') renderCards();
+  else if (view.name==='battle') renderBattle();
   else renderResult();
 }
 
@@ -599,6 +860,7 @@ function renderHome(){
     if (bank.length>12) h += `<div style="margin-top:12px"><button class="linkbtn" id="bankToggle">${showAll?'Show fewer':'Show all '+bank.length}</button></div>`;
   }
   h += `</div>`;
+  h += socialPanelHtml();
   h += `<div class="panel shared-only notesp"><div class="section-head"><h2>Shared notes and files</h2><button class="btn sm primary" id="noteNew">+ Upload a note</button></div>
     <p class="muted small" style="margin:-6px 0 12px">Notes, formula sheets and past questions shared by batch members. Anyone with this page can see and download them.</p>
     <div id="noteForm" class="hidden"></div><div id="notesBox"></div></div>`;
@@ -607,7 +869,7 @@ function renderHome(){
     <div class="panel"><div class="section-head"><h2>Reported questions</h2></div><div id="repBox"></div></div></div>`;
   h += `</div>`;
   app.innerHTML = h;
-  paintBoard(); paintReps(); paintNotes(); bindChapterPractice(); bindExamHero(); tickClock();
+  paintBoard(); paintReps(); paintNotes(); paintSocial(); bindChapterPractice(); bindExamHero(); tickClock();
   document.getElementById('noteNew').onclick=toggleNoteForm;
   document.getElementById('boardOpt').onchange=e=>{ S.settings.board=e.target.checked; save(); publishBoard(true); paintBoard(); };
   app.querySelectorAll('[data-go]').forEach(b=> b.onclick=()=>startSet(+b.dataset.go));
@@ -825,6 +1087,7 @@ async function publishBoard(force){
 }
 async function startShared(){
   if(sharedOn||!db||!UID) return; sharedOn=true; MODE='claude';
+  startSocialClaude();
   try{ if(UNS && UNS.can){ const c=await UNS.can('data.write'); if(c===false) canWrite=false; } }catch(e){}
   try{ db.collection('board').onSnapshot(async snap=>{ BOARD=snap.docs.map(d=>Object.assign({id:d.id},d.data())); await resolveNames(BOARD.map(b=>b.id)); paintBoard(); }, ()=>{}); }catch(e){}
   try{ db.collection('reports').onSnapshot(snap=>{ const m={}; snap.docs.forEach(d=>{ const items=(d.data()||{}).items||[]; items.forEach(it=>{ if(!it||!it.k||!DATA_OK(it.k,it.at||0)) return; const e=m[it.k]||(m[it.k]={n:0,r:{},notes:[],at:0}); e.n++; e.r[it.r]=(e.r[it.r]||0)+1; if(it.n) e.notes.push(String(it.n).slice(0,300)); e.at=Math.max(e.at,it.at||0); }); }); REPS=m; paintReps(); if(view.name==='result' && !Object.keys(expBusy).length && !document.querySelector('dialog[open]')) renderResult(); }, ()=>{}); }catch(e){}
@@ -854,7 +1117,7 @@ async function gasRefresh(){ if(gasBusy) return; gasBusy=true;
     BOARD=(d.board||[]).map(b=>({id:String(b.id),sets:+b.sets||0,pts:+b.pts||0,best:+b.best||0,avg:+b.avg||0})); NAMES={}; (d.board||[]).forEach(b=>{ NAMES[String(b.id)]=String(b.name||''); });
     const m={}; MYREP=[]; (d.reports||[]).forEach(it=>{ const k=String(it.k); if(!DATA_OK(k,+it.at||0)) return; if(String(it.id)===UID) MYREP.push({k,r:it.r,n:it.n,at:+it.at});
       const e=m[k]||(m[k]={n:0,r:{},notes:[],at:0}); e.n++; e.r[it.r]=(e.r[it.r]||0)+1; if(it.n) e.notes.push(String(it.n).slice(0,300)); e.at=Math.max(e.at,+it.at||0); });
-    REPS=m; if(d.visits) VIS=d.visits; if(Array.isArray(d.notes)){ NOTES_LIST=d.notes; paintNotes(); } paintVisits(); paintBoard(); paintReps(); if(view.name==='result' && !Object.keys(expBusy).length && !document.querySelector('dialog[open]')) renderResult();
+    REPS=m; ingestGasSocial(d); if(d.visits) VIS=d.visits; if(Array.isArray(d.notes)){ NOTES_LIST=d.notes; paintNotes(); } paintVisits(); paintBoard(); paintReps(); if(view.name==='result' && !Object.keys(expBusy).length && !document.querySelector('dialog[open]')) renderResult();
     GAS_ERR=''; paintConn();
   }catch(e){ GAS_ERR=String(e&&e.message||e); paintConn(); const b=document.getElementById('boardBox'); if(b&&!BOARD.length) b.innerHTML='<div class="empty">Could not reach the shared server.</div>'; }
   gasBusy=false; }
@@ -1044,12 +1307,14 @@ function submit(auto){
   const qt=ses.qt||{}; if(Object.keys(qt).length){ const ct=Array(10).fill(0), cn=Array(10).fill(0); ses.keys.forEach(k=>{ const i=chOf(k)-1; cn[i]++; ct[i]+=qt[k]||0; });
     at.ct=ct.map(Math.round); at.cn=cn; at.slow=ses.keys.map((k,j)=>[j+1,k,Math.round(qt[k]||0)]).sort((x,y)=>y[2]-x[2]).slice(0,5).filter(x=>x[2]>0); }
   if(sid==='ch') at.ch=ses.ch;
+  if(sid==='chal'){ at.code=ses.code; at.title=ses.title; }
   const r = S.results[sid] || (S.results[sid]={attempts:[]});
   r.attempts.push(at);
   if(!isSet(sid)) r.last={keys:ses.keys, answers:ses.answers, flags:ses.flags, order:ses.order, ...at};
   else r.last={ans:ses.keys.map(k=>ses.answers[k]===undefined?'-':ses.answers[k]).join(''), flg:ses.keys.map(k=>ses.flags[k]?'1':'0').join(''), ord:ses.keys.map(k=>ses.order[k]).join(''), ...at};
   delete S.sessions[sid];
   save(); flushDb();
+  if(sid==='chal') postChalResult(at.code, correct, ses.keys.length, Math.round(ses.elapsed));
   view={name:'result', sid, tab:'all'}; render(); window.scrollTo(0,0);
   if(correct/ses.keys.length>=PASS) celebrate(correct, ses.keys.length, sid);
   publishBoard();
@@ -1084,13 +1349,14 @@ function renderResult(){
   let h=`<div class="wrap"><div class="section-head" style="margin-bottom:16px"><h1>${label(sid)}${sid==='ch'&&L0.ch?': '+esc(CH[L0.ch-1]):''} result</h1><button class="btn" id="home">Back to dashboard</button></div>
   <div class="res-head"><div><div class="big">${L0.correct}<small>/${L0.total}</small></div><span class="verdict ${pass?'p':'n'}">${pct(frac)}, ${pass?'pass mark reached':'below 50% pass mark'}</span></div>
    <div><div class="res-nums"><div><b style="color:var(--ok)">${L0.correct}</b><span>Correct</span></div><div><b style="color:var(--bad)">${L0.wrong}</b><span>Wrong</span></div><div><b>${L0.skipped}</b><span>Skipped</span></div><div><b>${fmt(L0.time)}</b><span>Time${L0.auto?' (time ran out)':''}</span></div><div><b>${Math.round(L0.time/L0.total)} s</b><span>Per question</span></div></div>${hist}${L0.slow&&L0.slow.length?`<p class="muted" style="margin:8px 0 0;font-size:14px">Slowest: ${L0.slow.map(x=>`Q${x[0]} (${fmt(x[2])})`).join(', ')}</p>`:''}
-   <div class="res-acts">${isSet(sid)?`<button class="btn primary" id="retake">Retake set</button>${nextI&&nextI<=NSETS?`<button class="btn" id="nextSet">${S.sessions['s'+nextI]?'Resume':'Start'} Set ${nextI}</button>`:''}`:''}${sid==='ch'&&L0.ch?`<button class="btn primary" id="chAgain">New ${esc(CH[L0.ch-1])} quiz</button>`:''}</div></div></div>
+   <div class="res-acts">${isSet(sid)?`<button class="btn primary" id="retake">Retake set</button>${nextI&&nextI<=NSETS?`<button class="btn" id="nextSet">${S.sessions['s'+nextI]?'Resume':'Start'} Set ${nextI}</button>`:''}`:''}${sid==='ch'&&L0.ch?`<button class="btn primary" id="chAgain">New ${esc(CH[L0.ch-1])} quiz</button>`:''}${sid==='chal'&&L0.code?`<button class="btn primary" id="chalAgain">Retake challenge ${esc(L0.code)}</button>`:''}</div></div></div>
+  ${sid==='chal'&&L0.code?`<div class="panel" id="chalBoardRes" style="margin-bottom:16px">${chalBoardHtml(L0.code)}</div>`:''}
   ${chRow}
   <div class="tabs">${tabs.map(([id,t,c])=>`<button data-tab="${id}" class="${view.tab===id?'on':''}">${t} (${c})</button>`).join('')}</div>
   ${shown.length?shown.map(x=>{ const ord=(L0.order[x.k]||'0123').split('').map(Number); const [s,n]=x.k.split('-');
     return `<div class="rv"><div class="rv-h"><b>Q${x.i+1}${!isSet(sid)?` <span class="muted" style="font-weight:600">(Set ${s}, Q${n})</span>`:''}</b><span>${REPS[x.k]?`<span class="tag rep" title="Reported by batch members">Reported ×${REPS[x.k].n}</span> `:''}${x.f?'<span class="tag f">Difficult</span> ':''}<span class="tag ${x.st==='right'?'s':(x.st==='wrong'?'w':'s')}" ${x.st==='right'?'style="color:var(--ok);background:var(--ok-soft)"':''}>${x.st==='right'?'Correct':x.st==='wrong'?'Wrong':'Skipped'}</span></span></div>
     <p class="qtext">${esc(x.q.q)}</p><div class="opts">${ord.map((oi,p)=>`<div class="opt ${oi===x.q.a?'right':(oi===x.a?'wrong':'')}"><span class="l">${L[p]}</span><span>${esc(x.q.o[oi])}${oi===x.a&&oi!==x.q.a?' <span class="muted">(your answer)</span>':''}</span></div>`).join('')}</div>
-    <div class="rv-foot">${TLINK[x.k]?`<button class="linkbtn" data-thl="${chOf(x.k)}|${TLINK[x.k]}">📖 Related theory</button> · `:''}<button class="linkbtn" data-rep="${x.k}">Report this question</button></div>
+    <div class="rv-foot">${sharedOn?`<button class="linkbtn" data-disc="${x.k}">💬 Discuss${discCount(x.k)?' ('+discCount(x.k)+')':''}</button> · `:''}${TLINK[x.k]?`<button class="linkbtn" data-thl="${chOf(x.k)}|${TLINK[x.k]}">📖 Related theory</button> · `:''}<button class="linkbtn" data-rep="${x.k}">Report this question</button></div>
     ${x.st!=='right'?`<div class="exp-wrap">${EXP[x.k]?`<div class="exp">${expHtml(x.k)}</div>`:(sampler&&!sampleOff?`<button class="btn sm" data-exp="${x.k}" data-ua="${x.a===undefined?'':x.a}">Explain the correct answer</button><div class="exp hidden"></div>`:`<div class="exp muted">Correct answer: ${esc(x.q.o[x.q.a])}</div>`)}</div>`:''}</div>`; }).join('')
    : `<div class="empty">Nothing here.</div>`}
   </div>`;
@@ -1100,6 +1366,8 @@ function renderResult(){
   app.querySelectorAll('[data-exp]').forEach(b=> b.onclick=()=>{ b.disabled=true; const box=b.nextElementSibling; box.classList.remove('hidden'); explain(b.dataset.exp, b.dataset.ua===''?undefined:+b.dataset.ua, box); });
   const rt=document.getElementById('retake'); if(rt) rt.onclick=()=>startSet(+sid.slice(1));
   const ca=document.getElementById('chAgain'); if(ca) ca.onclick=()=>startChapter(L0.ch, L0.total, true);
+  const cg=document.getElementById('chalAgain'); if(cg) cg.onclick=()=>startChal(L0.code);
+  app.querySelectorAll('[data-disc]').forEach(b=> b.onclick=()=>openDiscuss(b.dataset.disc,true));
   app.querySelectorAll('[data-rep]').forEach(b=> b.onclick=()=>openReport(b.dataset.rep));
   app.querySelectorAll('[data-thl]').forEach(b=> b.onclick=()=>{ const [c,id]=b.dataset.thl.split('|'); view={name:'theory', ch:+c, hl:'thl'+id, back:{name:'result', sid, tab:view.tab}}; render(); });
   const ns=document.getElementById('nextSet'); if(ns) ns.onclick=()=>startSet(nextI);
