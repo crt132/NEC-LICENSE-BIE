@@ -184,6 +184,21 @@ function keyAdminSave_(d) {
   PropertiesService.getScriptProperties().setProperty('KEYFIX', j); return { ok: true };
 }
 
+/* ---- live learners (script cache, entries expire after 5 min) ---- */
+function presenceGet_() {
+  const c = CacheService.getScriptCache(), raw = c.get('presence'), now = Date.now();
+  const m = raw ? JSON.parse(raw) : {}, out = {};
+  Object.keys(m).forEach(id => { if (now - m[id].at < 300000) out[id] = m[id]; });
+  return { ok: true, presence: out };
+}
+function ping_(d, id) {
+  const c = CacheService.getScriptCache(), raw = c.get('presence'), now = Date.now();
+  const m = raw ? JSON.parse(raw) : {};
+  Object.keys(m).forEach(k => { if (now - m[k].at > 300000) delete m[k]; });
+  m[id] = { name: clean_(d.name, 40), act: clean_(d.act, 80), hide: d.hide ? 1 : 0, at: now };
+  c.put('presence', JSON.stringify(m), 600); return { ok: true };
+}
+
 /* ---- study chat ---- */
 const CHAT = 'chat', CHAT_HEAD = ['mid', 'id', 'name', 'ch', 't', 're', 'qk', 'at', 'hidden'];
 const CHATR = 'chatreact', CHATR_HEAD = ['id', 'mid', 'e', 'at'];
@@ -224,6 +239,7 @@ function chatReact_(d, id) {
 function doGet(e) {
   if (e && e.parameter && e.parameter.bt) return out_(btGet_(String(e.parameter.bt).toUpperCase()));
   if (e && e.parameter && e.parameter.chat !== undefined) return out_(chatGet_(+e.parameter.chat || 0));
+  if (e && e.parameter && e.parameter.presence !== undefined) return out_(presenceGet_());
   if (e && e.parameter && e.parameter.adminCheck !== undefined) { const k = PropertiesService.getScriptProperties().getProperty('ADMIN_KEY'); return out_({ ok: !!k && e.parameter.adminCheck === k }); }
   const b = sheet_(BOARD, BOARD_HEAD).getDataRange().getValues().slice(1);
   const r = sheet_(REPORTS, REP_HEAD).getDataRange().getValues().slice(1);
@@ -247,6 +263,7 @@ function doPost(e) {
     if (!/^[a-z0-9]{8,40}$/i.test(id)) return out_({ ok: false });
 
     if (d.action === 'bt') return out_(btPost_(d, id));
+    if (d.action === 'ping') return out_(ping_(d, id));
     if (d.action === 'chatSend') return out_(chatSend_(d, id));
     if (d.action === 'chatDel') return out_(chatDel_(d, id));
     if (d.action === 'chatReact') return out_(chatReact_(d, id));

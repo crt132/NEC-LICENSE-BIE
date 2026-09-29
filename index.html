@@ -254,6 +254,12 @@ body.noshared .two.shared,body.noshared .shared-only{display:none}
 .chip{display:inline-flex;gap:6px;align-items:center;font-size:13px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:4px 8px;margin-bottom:6px;max-width:100%}
 .tiles{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
 @media (max-width:760px){.chat-wrap{grid-template-columns:1fr;height:min(62vh,560px);min-height:360px}.chat-side{display:none}.chat-sel{display:block}.cm{max-width:92%}.pnav button{font-size:10px}}
+.live-pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:99px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer;margin:0 0 10px;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.dot{width:9px;height:9px;border-radius:50%;background:#16a34a;box-shadow:0 0 0 0 rgba(22,163,74,.6);animation:pulse 2s infinite;flex-shrink:0;display:inline-block}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(22,163,74,.55)}70%{box-shadow:0 0 0 7px rgba(22,163,74,0)}100%{box-shadow:0 0 0 0 rgba(22,163,74,0)}}
+.live-sum{display:flex;gap:10px;margin-bottom:10px}.live-sum div{flex:1;border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column}.live-sum b{font-size:24px}.live-sum span{font-size:12px;color:var(--muted)}
+.live-list{display:flex;flex-direction:column;max-height:320px;overflow:auto}.live-row{display:flex;align-items:center;gap:10px;padding:8px 2px;border-top:1px solid var(--line)}.live-row .la{margin-left:auto}
+@media (prefers-reduced-motion:reduce){.dot{animation:none}}
 .two .mockp{margin:0}
 .daily{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin:0 0 18px}
 .daily-l{display:flex;gap:14px;align-items:center}.daily h2{margin:0;font-size:18px}.daily p{margin:2px 0}
@@ -602,7 +608,7 @@ function ingestChal(list){ const m={}; list.forEach(c=>{ if(c&&c.code&&Array.isA
 function ingestRes(list){ const m={}; list.forEach(r=>{ if(r&&r.code) (m[r.code]||(m[r.code]=[])).push(r); }); CHRES=m; }
 function socialChanged(){ paintSocial(); if(SD_K) paintDiscuss(); if(view.name==='result'&&view.sid==='chal') paintChalBoard(); }
 async function startSocialClaude(){ if(socialOn||!db) return; socialOn=true;
-  startChat();
+  startChat(); startPresence();
   try{ const kd=db.doc('config/keys'); if(kd.onSnapshot) kd.onSnapshot(g=>{ if(g&&g.exists) applyKeyAdmin((g.data()||{}).map||{}); },()=>{}); else { const g=await kd.get(); if(g.exists) applyKeyAdmin((g.data()||{}).map||{}); } }catch(e){}
   try{ const nd=db.doc('config/notices'); if(nd.onSnapshot) nd.onSnapshot(g=>{ if(g&&g.exists) applyRemoteNotices(g.data()); },()=>{}); else { const g=await nd.get(); if(g.exists) applyRemoteNotices(g.data()); } }catch(e){}
   const flat=(snap,f)=>{ const out=[]; snap.docs.forEach(d=>{ ((d.data()||{}).items||[]).forEach(it=>out.push(Object.assign({by:d.id},it))); }); return out; };
@@ -613,7 +619,7 @@ async function startSocialClaude(){ if(socialOn||!db) return; socialOn=true;
 function ingestGasSocial(d){ if(Array.isArray(d.comments)) ingestComments(d.comments.map(c=>({id:String(c.cid),by:String(c.id),name:c.name,k:String(c.k),t:String(c.t),at:+c.at})));
   if(Array.isArray(d.challenges)) ingestChal(d.challenges.map(c=>{ let keys=[]; try{ keys=JSON.parse(c.keys); }catch(e){} return {code:String(c.code),by:String(c.id),name:c.name,title:String(c.title),keys,min:+c.min,at:+c.at}; }));
   if(Array.isArray(d.chres)) ingestRes(d.chres.map(r=>({code:String(r.code),by:String(r.id),name:r.name,c:+r.c,t:+r.t,s:+r.s,at:+r.at})));
-  socialOn=true; socialChanged(); checkUrlCode(); startChat(); }
+  socialOn=true; socialChanged(); checkUrlCode(); startChat(); startPresence(); }
 async function pushMine(col,item,max,filter){ const ref=db.doc(col+'/'+UID); let items=[]; try{ const g=await ref.get(); if(g.exists) items=((g.data()||{}).items)||[]; }catch(e){}
   if(filter) items=items.filter(filter); if(item) items.push(item); items=items.slice(-max); await ref.set({items}); }
 
@@ -1050,12 +1056,12 @@ function chatPaneHtml(){ return `<div class="pane-intro"><h2>Study chat</h2><p c
 function paintChat(){ const box=document.getElementById('chatBox'); if(!box) return;
   box.innerHTML=`<div class="chat-wrap"><aside class="chat-side" aria-label="Rooms">${CHANS.map(([id,ic,n])=>{ const u=unreadIn(id); return `<button class="chat-ch ${id===CHAT.ch?'on':''}" data-chan="${id}"><span class="cic">${ic}</span><span class="cn">${esc(n)}</span>${u?`<span class="cu">${u}</span>`:''}</button>`; }).join('')}</aside>
    <section class="chat-main"><select class="chat-sel" id="chSel">${CHANS.map(([id,ic,n])=>{ const u=unreadIn(id); return `<option value="${id}" ${id===CHAT.ch?'selected':''}>${ic==='💬'||ic==='🤝'?ic:ic+'.'} ${esc(n)}${u?' ('+u+' new)':''}</option>`; }).join('')}</select>
-    <div class="chat-head"><b>${esc(chanName(CHAT.ch))}</b><span class="muted small">${CHAT.ch.startsWith('c')?'Chapter room':CHAT.ch==='grp'?'Find study partners, share plans and schedules':'Anything about the exam'}</span></div>
+    <div class="chat-head"><b>${esc(chanName(CHAT.ch))} <span class="small" id="chatOnline" style="font-weight:600;color:var(--ok)"></span></b><span class="muted small">${CHAT.ch.startsWith('c')?'Chapter room':CHAT.ch==='grp'?'Find study partners, share plans and schedules':'Anything about the exam'}</span></div>
     <div class="chat-list" id="chList" aria-live="polite"></div><div id="chCompose"></div></section></div>`;
   box.querySelectorAll('[data-chan]').forEach(b=> b.onclick=()=>switchChan(b.dataset.chan));
   document.getElementById('chSel').onchange=e=>switchChan(e.target.value);
-  paintChatMsgs(true); paintChatCompose(); }
-function switchChan(ch){ const i=document.getElementById('chIn'); if(i) CHAT.draft[CHAT.ch]=i.value; CHAT.ch=ch; CHAT.re=null; paintChat(); }
+  paintChatMsgs(true); paintChatCompose(); if(typeof paintLive==='function') paintLive(); }
+function switchChan(ch){ const i=document.getElementById('chIn'); if(i) CHAT.draft[CHAT.ch]=i.value; CHAT.ch=ch; CHAT.re=null; paintChat(); presenceTouch(false); }
 function msgHtml(m,prev){ const mine=m.by===UID, nm=nameOf(m.by,m.name), rs=CHAT.reacts[m.id]||{}, grouped=prev&&prev.by===m.by&&m.at-prev.at<300000&&!m.re;
   const reply=m.re&&CHAT.by[m.re]&&!CHAT.by[m.re].del?CHAT.by[m.re]:null;
   let q=''; if(m.qk){ const qq=Q(m.qk), [s,n]=m.qk.split('-'); q=`<div class="chat-q"><div class="muted small">Set ${s}, Q${n} · ${esc(CH[chOf(m.qk)-1])}</div><div>${esc(qq.q)}</div><ol type="a">${qq.o.map(o=>`<li>${esc(o)}</li>`).join('')}</ol><details><summary>Show answer key</summary><b>${esc(qq.o[qq.a])}</b></details><button class="linkbtn" data-disc="${m.qk}">💬 Question discussion (${discCount(m.qk)})</button></div>`; }
@@ -1088,6 +1094,41 @@ function paintChatCompose(){ const c=document.getElementById('chCompose'); if(!c
   const ax=document.getElementById('chAtX'); if(ax) ax.onclick=()=>{ CHAT.attach=null; paintChatCompose(); };
   document.getElementById('chPick').onclick=()=>{ const v=(prompt('Set and question number, e.g. 12-45 (Set 12, Q45):')||'').trim().replace(/\s+/g,''); if(!v) return; if(!kOk(v)) return alert('Use the format set-question, e.g. 12-45.'); CHAT.attach=v; paintChatCompose(); }; }
 
+/* ---------- live learners (presence) ---------- */
+const LIVE={map:{},started:false,last:0,lastAct:'',timer:null,poll:null};
+const ONLINE_MS=150000;   // seen within 2.5 min = online
+function myActivity(){ const v=view;
+  if(v.name==='exam'){ const ses=S.sessions[v.sid]; if(/^s\d+$/.test(v.sid)) return 'Practising Set '+v.sid.slice(1);
+    if(v.sid==='ch'&&ses&&ses.ch) return 'Chapter quiz: '+CH[ses.ch-1]; return label(v.sid); }
+  if(v.name==='theory') return 'Reading theory: '+CH[(v.ch||1)-1];
+  if(v.name==='cards') return 'Flashcards';
+  if(v.name==='battle') return 'In a quiz battle';
+  if(v.name==='result') return 'Reviewing results';
+  if(v.name==='home') return PANE==='chat'?'In study chat: '+chanName(CHAT.ch):PANE==='practice'?'Choosing practice':PANE==='study'?'Study page':PANE==='progress'?'Checking progress':PANE==='community'?'Community page':'On the dashboard';
+  return 'Online'; }
+function liveList(){ const now=Date.now(); return Object.values(LIVE.map).filter(p=>p&&now-p.at<ONLINE_MS&&!p.hide).sort((a,b)=>(a.id===UID?-1:b.id===UID?1:b.at-a.at)); }
+async function presenceTouch(force){ if(!sharedOn||document.hidden) return; const act=S.settings.hideOnline?'':myActivity(), now=Date.now();
+  if(!force && act===LIVE.lastAct && now-LIVE.last<45000) return; if(!force && now-LIVE.last<8000){ clearTimeout(LIVE.timer); LIVE.timer=setTimeout(()=>presenceTouch(true),8000-(now-LIVE.last)); return; }
+  LIVE.last=now; LIVE.lastAct=act; const doc={at:now,act,hide:!!S.settings.hideOnline};
+  LIVE.map[UID]=Object.assign({id:UID,name:MODE==='gas'?S.settings.name:''},doc); paintLive();
+  try{ if(MODE==='gas') await gasPost({action:'ping',id:UID,name:S.settings.name||'',act,hide:doc.hide?1:0}); else await db.doc('presence/'+UID).set(doc); }catch(e){} }
+function ingestPresence(m){ LIVE.map=m; if(!LIVE.map[UID]&&LIVE.last) LIVE.map[UID]={id:UID,at:LIVE.last,act:LIVE.lastAct,hide:!!S.settings.hideOnline,name:S.settings.name}; paintLive(); }
+function startPresence(){ if(LIVE.started||!sharedOn) return; LIVE.started=true;
+  if(MODE==='claude'){ try{ db.collection('presence').onSnapshot(async snap=>{ const m={}; snap.docs.forEach(d=>{ m[d.id]=Object.assign({id:d.id},d.data()); }); await resolveNames(Object.keys(m).filter(id=>Date.now()-m[id].at<ONLINE_MS&&!(id in NAMES))); ingestPresence(m); },()=>{}); }catch(e){} }
+  else { const poll=async()=>{ try{ const r=await fetch(BACKEND_URL+(BACKEND_URL.includes('?')?'&':'?')+'presence=1&t='+Date.now()); const j=await r.json(); if(j&&j.ok){ const m={}; Object.entries(j.presence||{}).forEach(([id,p])=>{ m[id]=Object.assign({id},p); }); ingestPresence(m); } }catch(e){} LIVE.poll=setTimeout(poll,document.hidden?120000:30000); }; poll(); }
+  presenceTouch(true); setInterval(()=>presenceTouch(false),50000); setInterval(paintLive,30000);
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) presenceTouch(true); });
+  window.addEventListener('pagehide',()=>{ try{ if(MODE==='claude') db.doc('presence/'+UID).set({at:Date.now()-ONLINE_MS,act:'',hide:!!S.settings.hideOnline}); }catch(e){} }); }
+function liveName(p){ return p.id===UID?'You':nameOf(p.id,p.name); }
+function paintLive(){ const l=liveList(), n=l.length;
+  document.querySelectorAll('.live-pill').forEach(el=>{ el.innerHTML=sharedOn?`<span class="dot"></span><b>${n}</b> learning now${n>1?` · ${esc(l.filter(p=>p.id!==UID).slice(0,3).map(liveName).join(', '))}${n>4?' and others':''}`:''}`:''; el.classList.toggle('hidden',!sharedOn); });
+  const box=document.getElementById('liveBox'); if(box){ const today=VIS&&VIS.today;
+    box.innerHTML=`<div class="live-sum"><div><b>${n}</b><span>Online now</span></div>${today?`<div><b>${today}</b><span>Active today</span></div>`:''}${VIS&&VIS.week?`<div><b>${VIS.week}</b><span>This week</span></div>`:''}</div>
+     ${n?`<div class="live-list">${l.map(p=>`<div class="live-row"><span class="dot"></span><b>${esc(liveName(p))}</b><span class="muted small">${esc(p.act||'Online')}</span><span class="muted small la">${Date.now()-p.at<60000?'now':ago(p.at)}</span></div>`).join('')}</div>`:'<div class="empty">No one else is online right now.</div>'}
+     <label class="small" style="display:block;margin-top:10px"><input type="checkbox" id="liveHide" ${S.settings.hideOnline?'checked':''}> Hide me from the online list</label>`;
+    document.getElementById('liveHide').onchange=e=>{ S.settings.hideOnline=e.target.checked; save(); presenceTouch(true); }; }
+  const ch=document.getElementById('chatOnline'); if(ch) ch.textContent=n?`🟢 ${n} online`:''; }
+
 /* ---------- dialog ---------- */
 const dlg = document.getElementById('dlg');
 function confirmBox(t,b,yes){ return new Promise(res=>{ document.getElementById('dlgT').textContent=t; document.getElementById('dlgB').textContent=b; const y=document.getElementById('dlgYes'), n=document.getElementById('dlgNo'); y.textContent=yes||'OK'; n.classList.remove('hidden');
@@ -1103,6 +1144,7 @@ function render(){
   else if (view.name==='cards') renderCards();
   else if (view.name==='battle') renderBattle();
   else renderResult();
+  if(typeof presenceTouch==='function') presenceTouch(false);
 }
 
 function timeHtml(){
@@ -1191,7 +1233,7 @@ const PANES=[['home','🏠','Home'],['practice','📝','Practice'],['study','�
 let PANE=(()=>{ const h=(location.hash||'').slice(1); return PANES.some(p=>p[0]===h)?h:'home'; })();
 function navHtml(){ const due=dueBank().length;
   return `<nav class="pnav" aria-label="Sections">${PANES.map(([id,ic,t])=>`<button data-pane-go="${id}" class="${id===PANE?'on':''}" ${id===PANE?'aria-current="page"':''}><span class="pn-ic" aria-hidden="true">${ic}</span><span class="pn-t">${t}</span>${id==='practice'&&due?`<span class="pn-badge">${due}</span>`:''}</button>`).join('')}</nav>`; }
-function showPane(id,push){ if(!PANES.some(p=>p[0]===id)) id='home'; PANE=id;
+function showPane(id,push){ if(!PANES.some(p=>p[0]===id)) id='home'; PANE=id; setTimeout(()=>presenceTouch(false),0);
   if(id==='chat'){ setTimeout(()=>{ paintChatMsgs(true); paintChatBadge(); },0); chatPollNow(); }
   document.querySelectorAll('.tabpane').forEach(el=>el.classList.toggle('on',el.dataset.pane===id));
   document.querySelectorAll('[data-pane-go]').forEach(b=>{ const on=b.dataset.paneGo===id; b.classList.toggle('on',on); if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); });
@@ -1230,6 +1272,7 @@ function renderHome(){
     <button class="btn sm ghost" id="resetAll">Reset progress</button>
     <span class="save-state" id="saveState">${dref?'Saved to your account':'Saved on this device'}</span>
   </div></div>
+  <button class="live-pill hidden" data-pane-go="community" title="See who is learning now"></button>
   ${navHtml()}
   <div class="tabpane" data-pane="home">
   ${examHeroHtml()}
@@ -1301,7 +1344,8 @@ function renderHome(){
   h += `</div>`;
   h += searchHtml();
   h += `</div><div class="tabpane" data-pane="community"><div class="pane-intro"><h2>Community</h2><p class="muted">Play with friends, discuss questions, share notes and see the batch leaderboard.</p></div>
-    <div class="empty noshared-only">Leaderboard, discussion, friend challenges and shared notes appear here once the shared server is connected.</div>`;
+    <div class="empty noshared-only">Leaderboard, discussion, friend challenges and shared notes appear here once the shared server is connected.</div>
+    <div class="panel shared-only" style="margin:0 0 18px"><div class="section-head"><h2>🟢 Live learners</h2></div><div id="liveBox"></div></div>`;
   h += socialPanelHtml();
   h += `<div class="panel shared-only notesp"><div class="section-head"><h2>Shared notes and files</h2><button class="btn sm primary" id="noteNew">+ Upload a note</button></div>
     <p class="muted small" style="margin:-6px 0 12px">Notes, formula sheets and past questions shared by batch members. Anyone with this page can see and download them.</p>
@@ -1313,7 +1357,7 @@ function renderHome(){
   h += `<div class="tabpane" data-pane="chat">${chatPaneHtml()}</div>`;
   h += `</div>`;
   app.innerHTML = h;
-  bindNav(); bindExtra(); paintChat(); paintChatBadge();
+  bindNav(); bindExtra(); paintChat(); paintChatBadge(); paintLive();
   paintBoard(); paintReps(); paintNotes(); paintSocial(); bindChapterPractice(); bindExamHero(); tickClock();
   document.getElementById('noteNew').onclick=toggleNoteForm;
   document.getElementById('boardOpt').onchange=e=>{ S.settings.board=e.target.checked; save(); publishBoard(true); paintBoard(); };
