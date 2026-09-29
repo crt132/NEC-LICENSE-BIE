@@ -184,8 +184,46 @@ function keyAdminSave_(d) {
   PropertiesService.getScriptProperties().setProperty('KEYFIX', j); return { ok: true };
 }
 
+/* ---- study chat ---- */
+const CHAT = 'chat', CHAT_HEAD = ['mid', 'id', 'name', 'ch', 't', 're', 'qk', 'at', 'hidden'];
+const CHATR = 'chatreact', CHATR_HEAD = ['id', 'mid', 'e', 'at'];
+const CHANS_OK = /^(gen|grp|c([1-9]|10))$/, REACTS_OK = ['👍', '💡', '✅', '❤️'];
+function chatGet_(since) {
+  const rows = sheet_(CHAT, CHAT_HEAD).getDataRange().getValues().slice(1);
+  const recent = rows.slice(-1500);
+  const msgs = recent.filter(x => !x[8] && +x[7] > since).slice(-600)
+    .map(x => ({ mid: String(x[0]), id: String(x[1]), name: x[2], ch: String(x[3]), t: x[4], re: String(x[5] || ''), qk: String(x[6] || ''), at: +x[7] }));
+  const dels = recent.filter(x => x[8]).map(x => String(x[0])).slice(-500);
+  const reacts = sheet_(CHATR, CHATR_HEAD).getDataRange().getValues().slice(1).slice(-4000).map(x => ({ id: String(x[0]), mid: String(x[1]), e: x[2] }));
+  return { ok: true, msgs, dels, reacts };
+}
+function chatSend_(d, id) {
+  const mid = String(d.mid || ''), ch = String(d.ch || ''), t = clean_(d.t, 1000), name = clean_(d.name, 40), qk = String(d.qk || '');
+  if (!/^[a-z0-9]{6,20}$/.test(mid) || !CHANS_OK.test(ch) || !name || (!t && !qk) || (qk && !keyOk_(qk))) return { ok: false, error: 'Invalid message' };
+  const sh = sheet_(CHAT, CHAT_HEAD), now = Date.now();
+  const mine = sh.getDataRange().getValues().slice(1).filter(x => String(x[1]) === id && +x[7] > now - 864e5).length;
+  if (mine >= 300) return { ok: false, error: 'Daily message limit reached' };
+  sh.appendRow(["'" + mid, "'" + id, "'" + name, "'" + ch, "'" + t, "'" + String(d.re || '').slice(0, 20), "'" + qk, now, '']);
+  return { ok: true };
+}
+function chatDel_(d, id) {
+  const sh = sheet_(CHAT, CHAT_HEAD), key = PropertiesService.getScriptProperties().getProperty('ADMIN_KEY');
+  const admin = !!key && String(d.key || '') === key;
+  const at = findRow_(sh, v => String(v[0]) === String(d.mid) && (admin || String(v[1]) === id));
+  if (!at) return { ok: false, error: 'Not allowed' };
+  sh.getRange(at, 9).setValue('deleted'); return { ok: true };
+}
+function chatReact_(d, id) {
+  const mid = String(d.mid || ''), e = String(d.e || '');
+  if (!/^[a-z0-9]{6,20}$/.test(mid) || REACTS_OK.indexOf(e) < 0) return { ok: false };
+  const sh = sheet_(CHATR, CHATR_HEAD), at = findRow_(sh, v => String(v[0]) === id && String(v[1]) === mid && String(v[2]) === e);
+  if (at) sh.deleteRow(at); else sh.appendRow(["'" + id, "'" + mid, e, Date.now()]);
+  return { ok: true };
+}
+
 function doGet(e) {
   if (e && e.parameter && e.parameter.bt) return out_(btGet_(String(e.parameter.bt).toUpperCase()));
+  if (e && e.parameter && e.parameter.chat !== undefined) return out_(chatGet_(+e.parameter.chat || 0));
   if (e && e.parameter && e.parameter.adminCheck !== undefined) { const k = PropertiesService.getScriptProperties().getProperty('ADMIN_KEY'); return out_({ ok: !!k && e.parameter.adminCheck === k }); }
   const b = sheet_(BOARD, BOARD_HEAD).getDataRange().getValues().slice(1);
   const r = sheet_(REPORTS, REP_HEAD).getDataRange().getValues().slice(1);
@@ -209,6 +247,9 @@ function doPost(e) {
     if (!/^[a-z0-9]{8,40}$/i.test(id)) return out_({ ok: false });
 
     if (d.action === 'bt') return out_(btPost_(d, id));
+    if (d.action === 'chatSend') return out_(chatSend_(d, id));
+    if (d.action === 'chatDel') return out_(chatDel_(d, id));
+    if (d.action === 'chatReact') return out_(chatReact_(d, id));
     if (d.action === 'saveNotices') return out_(noticesSave_(d));
     if (d.action === 'saveKeys') return out_(keyAdminSave_(d));
     if (d.action === 'note') return out_(addNote_(d, id));
