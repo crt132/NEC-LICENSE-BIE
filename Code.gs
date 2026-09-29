@@ -10,7 +10,7 @@
  */
 const BOARD = 'board', REPORTS = 'reports';
 const BOARD_HEAD = ['id', 'name', 'sets', 'pts', 'best', 'avg', 'at'];
-const REP_HEAD = ['id', 'k', 'r', 'n', 'at'];
+const REP_HEAD = ['id', 'k', 'r', 'n', 'at', 'x'];
 const REASONS = ['key', 'q', 'opt', 'dup', 'other'];
 const NOTES = 'notes';
 const NOTE_HEAD = ['noteId', 'id', 'name', 'title', 'chapter', 'text', 'fileName', 'fileType', 'fileSize', 'fileId', 'url', 'at', 'hidden'];
@@ -174,6 +174,16 @@ function noticesSave_(d) {
   PropertiesService.getScriptProperties().setProperty('NOTICES', j); return { ok: true };
 }
 
+/* ---- answer keys set by the admin (overrides automatic batch corrections) ---- */
+function keyAdminGet_() { const v = PropertiesService.getScriptProperties().getProperty('KEYFIX'); try { return v ? JSON.parse(v) : {}; } catch (e) { return {}; } }
+function keyAdminSave_(d) {
+  const key = PropertiesService.getScriptProperties().getProperty('ADMIN_KEY');
+  if (!key || String(d.key || '') !== key) return { ok: false, error: 'Wrong admin key' };
+  const m = {}; Object.keys(d.data || {}).forEach(k => { const v = d.data[k]; if (keyOk_(k) && (v === 'orig' || (+v >= 0 && +v <= 3))) m[k] = v === 'orig' ? 'orig' : +v; });
+  const j = JSON.stringify(m); if (j.length > 8500) return { ok: false, error: 'Too many overrides' };
+  PropertiesService.getScriptProperties().setProperty('KEYFIX', j); return { ok: true };
+}
+
 function doGet(e) {
   if (e && e.parameter && e.parameter.bt) return out_(btGet_(String(e.parameter.bt).toUpperCase()));
   if (e && e.parameter && e.parameter.adminCheck !== undefined) { const k = PropertiesService.getScriptProperties().getProperty('ADMIN_KEY'); return out_({ ok: !!k && e.parameter.adminCheck === k }); }
@@ -182,8 +192,9 @@ function doGet(e) {
   return out_(Object.assign({
     ok: true,
     notices: noticesGet_(),
+    keyadmin: keyAdminGet_(),
     board: b.map(x => ({ id: x[0], name: x[1], sets: x[2], pts: x[3], best: x[4], avg: x[5], at: x[6] })),
-    reports: r.map(x => ({ id: x[0], k: x[1], r: x[2], n: x[3], at: x[4] })),
+    reports: r.map(x => ({ id: x[0], k: x[1], r: x[2], n: x[3], at: x[4], x: x[5] === '' || x[5] === undefined ? '' : x[5] })),
     visits: visitStats_(),
     notes: notesList_()
   }, socialData_()));
@@ -199,6 +210,7 @@ function doPost(e) {
 
     if (d.action === 'bt') return out_(btPost_(d, id));
     if (d.action === 'saveNotices') return out_(noticesSave_(d));
+    if (d.action === 'saveKeys') return out_(keyAdminSave_(d));
     if (d.action === 'note') return out_(addNote_(d, id));
     if (d.action === 'deleteNote') return out_(deleteNote_(d, id));
     if (d.action === 'comment') return out_(addComment_(d, id));
@@ -233,7 +245,8 @@ function doPost(e) {
       if (!m || +m[1] < 1 || +m[1] > 40 || +m[2] < 1 || +m[2] > 100) return out_({ ok: false });
       const reason = REASONS.indexOf(d.r) >= 0 ? d.r : 'other';
       const sh = sheet_(REPORTS, REP_HEAD);
-      const row = ["'" + id, "'" + k, reason, "'" + clean_(d.n, 500), Date.now()];  // ' keeps values as text
+      const x = (reason === 'key' && d.x !== '' && d.x !== null && d.x !== undefined && +d.x >= 0 && +d.x <= 3) ? +d.x : '';
+      const row = ["'" + id, "'" + k, reason, "'" + clean_(d.n, 500), Date.now(), x];  // ' keeps values as text
       const at = findRow_(sh, v => String(v[0]) === id && String(v[1]) === k);
       if (at) sh.getRange(at, 1, 1, row.length).setValues([row]); else sh.appendRow(row);
       return out_({ ok: true });

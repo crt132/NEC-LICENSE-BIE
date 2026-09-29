@@ -1,5 +1,5 @@
 // Offline cache for NEC IE Practice. Bump VERSION after uploading a new index.html.
-const VERSION = 'nec-ie-v7';
+const VERSION = 'nec-ie-v8';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './notices.json'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => Promise.all(CORE.map(u => c.add(u).catch(() => {})))).then(() => self.skipWaiting()));
